@@ -30,7 +30,12 @@
               "src/styles.css",
               "node_modules/ngx-toastr/toastr.css"
             ],
-            "scripts": []
+            "scripts": [
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js",
+              "src/app/layout/assets/vendor/jquery/jquery.min.js",
+              "src/app/layout/assets/vendor/bootstrap/js/bootstrap.bundle.min.js",
+              "src/app/layout/assets/js/sb-admin-2.min.js"
+            ]
           },
           "configurations": {
             "production": {

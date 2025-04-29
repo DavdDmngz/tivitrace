@@ -1,18 +1,23 @@
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');  // Importa el módulo fs para trabajar con el sistema de archivos
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, path.join(__dirname, '../../public/img/usuarios'));
+        const uploadPath = path.join(__dirname, '../../../public/img/usuarios');
+        
+        // Verifica si la carpeta de destino existe, si no, la crea
+        if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });  // Crea la carpeta de forma recursiva
+        }
+
+        cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
         const userId = req.params.id || 'default-user';
         const extension = path.extname(file.originalname).toLowerCase();
-        
         const fileName = `user-${Date.now()}-${userId}${extension}`;
-        
         console.log('Archivo guardado como:', fileName);
-
         cb(null, fileName);
     }
 });
@@ -27,8 +32,8 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 },
+    limits: { fileSize: 5 * 1024 * 1024 },  // Límite de 5MB
     fileFilter
-}).single('img');
+});
 
 module.exports = upload;

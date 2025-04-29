@@ -52,6 +52,10 @@ const Usuarios = db.define('usuarios', {
         type: DataTypes.DATE,
         allowNull: true,
     },
+    imagenUrl: {
+        type: DataTypes.STRING,
+        allowNull: true
+    }
 }, {
     tableName: 'usuarios',
     timestamps: true,

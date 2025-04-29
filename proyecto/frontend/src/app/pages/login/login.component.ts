@@ -6,7 +6,6 @@ import { Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { jwtDecode } from 'jwt-decode';
 
-
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -32,9 +31,10 @@ export class LoginComponent {
         localStorage.setItem('jwt', res.token);
         this.toastr.success('¡Inicio de sesión exitoso!', 'Bienvenido');
 
-        // ✅ Decodificar el token para obtener los roles
+        // ✅ Decodificar el token para obtener el ID y roles
         const decodedToken: any = jwtDecode(res.token);
         const roles: string[] = decodedToken.roles || [];
+        const userId: string = decodedToken.id; // Obtener el ID del usuario del JWT
 
         // ✅ Redirigir según rol (ajusta según los nombres reales de tus rutas y roles)
         if (roles.includes('Administrador')) {
@@ -42,7 +42,7 @@ export class LoginComponent {
         } else if (roles.includes('Supervisor')) {
           this.router.navigate(['/supervisor/dashboard']);
         } else {
-          this.router.navigate(['/home']);
+          this.router.navigate([`/home`]);
         }
       },
       error: (err) => {

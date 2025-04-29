@@ -37,6 +37,11 @@ export class AuthService {
     }
   }
 
+  getNombreUsuario(): string | null {
+    const decoded = this.getDecodedToken();
+    return decoded?.nombre && decoded?.apellido ? `${decoded.nombre} ${decoded.apellido}` : null;
+  }
+
   getRoles(): string[] {
     const decoded = this.getDecodedToken();
     return decoded?.roles || [];
@@ -44,5 +49,10 @@ export class AuthService {
 
   hasRole(rol: string): boolean {
     return this.getRoles().includes(rol);
+  }
+
+  getUsuarioId(): string | null {
+    const decoded = this.getDecodedToken();
+    return decoded?.id || null;
   }
 }

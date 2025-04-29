@@ -76,16 +76,44 @@ const usuarioController = {
             if (!usuario) {
                 return res.status(404).json({ msg: 'Usuario no encontrado' });
             }
-
+    
             const { nombre, apellido, correo, contrasena, codigo_pais, telefono } = req.body;
-            if (contrasena) {
-                usuario.contrasena = bcrypt.hashSync(contrasena, bcrypt.genSaltSync(10));
+    
+            let nuevaImagenUrl = usuario.imagenUrl; // corregido: imagenUrl
+    
+            if (req.file) {
+                const fs = require('fs');
+                const path = require('path');
+    
+                // Borrar imagen anterior si existe
+                if (usuario.imagenUrl) {
+                    const rutaAnterior = path.join(__dirname, `../../public${usuario.imagenUrl}`);
+                    if (fs.existsSync(rutaAnterior)) {
+                        fs.unlinkSync(rutaAnterior);
+                    }
+                }
+    
+                nuevaImagenUrl = `/img/usuarios/${req.file.filename}`;
             }
-
-            await usuario.update({ nombre, apellido, correo, codigo_pais, telefono });
+    
+            // Solo actualizar la contraseña si la enviaron
+            if (contrasena) {
+                usuario.contrasena = await bcrypt.hash(contrasena, 10);
+            }
+    
+            await usuario.update({
+                nombre,
+                apellido,
+                correo,
+                codigo_pais,
+                telefono,
+                imagenUrl: nuevaImagenUrl
+            });
+    
             res.json({ msg: 'Usuario actualizado correctamente', usuario });
         } catch (error) {
-            res.status(500).json({ msg: 'Error al actualizar usuario', error });
+            console.error(error);
+            res.status(500).json({ msg: 'Error al actualizar usuario', error: error.message });
         }
     },
 
@@ -102,6 +130,44 @@ const usuarioController = {
             res.status(500).json({ msg: 'Error al eliminar usuario', error });
         }
     },
-};
 
+    async actualizarImagenUsuario(req, res) {
+        try {
+            const usuarioId = req.params.id;
+    
+            if (!req.file) {
+                return res.status(400).json({ msg: 'No se recibió ninguna imagen' });
+            }
+    
+            const usuario = await Usuarios.findByPk(usuarioId);
+            if (!usuario) {
+                return res.status(404).json({ msg: 'Usuario no encontrado' });
+            }
+    
+            // 🔥 Borrar imagen anterior si existe
+            const fs = require('fs');
+            const path = require('path');
+            if (usuario.imagenUrl) {
+                const rutaAnterior = path.join(__dirname, `../../public/img/usuarios/${usuario.imagenUrl}`);
+                if (fs.existsSync(rutaAnterior)) {
+                    fs.unlinkSync(rutaAnterior);
+                }
+            }
+    
+            // Guardar solo el nombre del archivo (sin la ruta completa) en la base de datos
+            const imagenNombre = req.file.filename; // Solo el nombre del archivo
+            await usuario.update({ imagenUrl: imagenNombre }); // Almacenar solo el nombre del archivo
+    
+            // Responder con la URL completa para que el frontend la utilice
+            const imagenUrlCompleta = `http://localhost:3003/img/usuarios/${imagenNombre}`;
+    
+            res.json({
+                msg: 'Imagen de perfil actualizada exitosamente',
+                imagenUrl: imagenUrlCompleta
+            });
+        } catch (error) {
+            res.status(500).json({ msg: 'Error al actualizar imagen de perfil', error: error.message });
+        }
+    }      
+};
 module.exports = usuarioController;

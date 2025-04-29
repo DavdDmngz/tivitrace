@@ -33,12 +33,14 @@ exports.login = async (req, res) => {
         const roles = usuario.roles.map(rol => rol.nombre);
 
         const payload = {
-            id: usuario.id,
-            correo: usuario.correo,
-            roles
+        id: usuario.id,
+        nombre: usuario.nombre,
+        apellido: usuario.apellido,
+        correo: usuario.correo,
+        roles
         };
 
-        const token = generarToken(payload);
+        const token = generarToken(payload);  // Generar el token con los nuevos datos
         return res.json({ token });
 
     } catch (error) {
@@ -54,6 +56,7 @@ exports.refreshToken = async (req, res) => {
         const payload = jwt.verify(token, JWT_SECRET);
         const nuevoToken = generarToken({
             id: payload.id,
+            nombre: payload.nombre,  // Incluir nombre al refrescar el token
             correo: payload.correo,
             roles: payload.roles
         });
@@ -172,4 +175,3 @@ exports.verificarPermiso = (permisoRequerido) => {
         }
     };
 };
-

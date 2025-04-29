@@ -2,6 +2,7 @@ require('dotenv').config();
 require('./core/config/cron.config');
 
 const express = require('express');
+const path = require('path');
 const morgan = require('morgan');
 const cors = require('cors');
 const corsOptions = require('./core/config/cors.config'); // Ruta donde está tu objeto de configuración CORS
@@ -22,6 +23,8 @@ const authRutas = require('./rutas/auth.rutas');
 
 const app = express();
 
+// Servir archivos estáticos de la carpeta 'public/img/usuarios'
+app.use('/img/usuarios', express.static(path.join(__dirname, '../public/img/usuarios')));
 app.set('port', process.env.PORT || 3003);
 
 // Middleware
