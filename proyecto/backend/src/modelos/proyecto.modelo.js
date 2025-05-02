@@ -27,6 +27,18 @@ const Proyecto = sequelize.define('proyecto', {
     fecha_creacion: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW
+    },
+    fecha_fin: {
+        type: DataTypes.DATE,
+        allowNull: true
+    },
+    estado: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: 'en_progreso',
+        validate: {
+            isIn: [['en_progreso', 'pendiente', 'finalizado', 'cancelado']]
+        }
     }
 }, {
     tableName: 'proyecto',

@@ -1,12 +1,15 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './pages/login/login.component';
-import { RegistroComponent } from './pages/registro/registro.component';
-import { RecuperarContrasenaComponent } from './pages/forgot_password/forgot-password.component';
-import { HomeComponent } from './pages/home/home.component';
-import { PerfilUsuarioComponent } from './pages/perfil-usuario/perfil-usuario.component';
+import { LoginComponent } from './routes/pages/login/login.component';
+import { RegistroComponent } from './routes/pages/registro/registro.component';
+import { RecuperarContrasenaComponent } from './routes/pages/forgot_password/forgot-password.component';
+import { HomeComponent } from './routes/pages/home/home.component';
+import { PerfilUsuarioComponent } from './routes/pages/perfil-usuario/perfil-usuario.component';
 import { MainLayoutComponent } from './layout/layout.component';
 import { AuthGuard } from './guards/auth.guard';
 import { PublicGuard } from './guards/public.guard';
+import { roleGuard } from './guards/role.guard';
+import { UsuarioComponent } from './routes/admin/usuarios/usuarios.component';
+import { ProyectoComponent } from './routes/admin/proyectos/proyecto.component';
 
 
 export const routes: Routes = [
@@ -50,7 +53,25 @@ export const routes: Routes = [
         path: 'profile/:id',
         component: PerfilUsuarioComponent,
         title: 'Mi Perfil',
-      }      
+      },
+      {
+        path: 'admin/usuarios',
+        canActivate: [roleGuard(['administrador'])],
+        title: 'Gestión de Usuarios',
+        children: [
+          { path: '', redirectTo: 'listar', pathMatch: 'full' },
+          { path: 'listar', component: UsuarioComponent, title: 'Lista de Usuarios' },
+          { path: 'crear', component: UsuarioComponent, title: 'Crear Usuario' },  // Cambié a UsuarioComponent
+          { path: 'editar/:id', component: UsuarioComponent, title: 'Editar Usuario' } // Agregué la ruta para editar
+        ]
+      },
+      {
+        path: 'admin/proyectos',
+        component: ProyectoComponent,
+        canActivate: [roleGuard(['administrador'])],
+        title: 'Proyectos'
+      }
+      
     ]
   },
 

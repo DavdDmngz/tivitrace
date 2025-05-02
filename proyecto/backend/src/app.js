@@ -23,6 +23,12 @@ const authRutas = require('./rutas/auth.rutas');
 
 const app = express();
 
+app.use((req, res, next) => {
+    console.log("🌐 Origin:", req.headers.origin);
+    next();
+  });
+  
+
 // Servir archivos estáticos de la carpeta 'public/img/usuarios'
 app.use('/img/usuarios', express.static(path.join(__dirname, '../public/img/usuarios')));
 app.set('port', process.env.PORT || 3003);

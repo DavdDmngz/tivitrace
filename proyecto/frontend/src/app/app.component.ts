@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Routes } from '@angular/router';
 import { RouterModule } from '@angular/router';
-import { LoginComponent } from './pages/login/login.component'; // Asegúrate que este archivo existe
+import { LoginComponent } from './routes/pages/login/login.component'; // Asegúrate que este archivo existe
 
 @Component({
   selector: 'app-root',

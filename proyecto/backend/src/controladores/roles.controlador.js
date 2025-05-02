@@ -17,7 +17,8 @@ const RolesController = {
             if (!rol) {
                 return res.status(404).json({ error: 'Rol no encontrado' });
             }
-            res.status(200).json(rol);
+            // Solo devolver el nombre
+            res.status(200).json({ nombre: rol.nombre });
         } catch (error) {
             res.status(500).json({ error: 'Error al obtener el rol', detalle: error.message });
         }

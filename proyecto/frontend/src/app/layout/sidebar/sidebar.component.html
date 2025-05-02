@@ -30,11 +30,11 @@
 
     <!-- Nav Item - Proyectos -->
     <li class="nav-item">
-        <a class="nav-link" href="/proyectos">
-            <i class="fas fa-fw fa-folder-open"></i>
-            <span>Proyectos</span>
+        <a class="nav-link" [routerLink]="['/admin/proyectos']">
+          <i class="fas fa-fw fa-folder-open"></i>
+          <span>Proyectos</span>
         </a>
-    </li>
+      </li>      
 
     <!-- Nav Item - Tareas -->
     <li class="nav-item">
@@ -61,8 +61,8 @@
         </a>
         <div id="collapseUsuarios" class="collapse" aria-labelledby="headingUsuarios" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
-                <a class="collapse-item" href="/usuarios">Lista de Usuarios</a>
-                <a class="collapse-item" href="/crear-usuario">Crear Usuario</a>
+                <a class="collapse-item" [routerLink]="'/admin/usuarios'">Lista de Usuarios</a>
+                <a class="collapse-item" [routerLink]="'/admin/usuarios/crear'">Crear Usuarios</a>
             </div>
         </div>
     </li>

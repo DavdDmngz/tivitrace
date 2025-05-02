@@ -1,0 +1,90 @@
+<!-- Vista: Lista de usuarios -->
+<div *ngIf="modo === 'listar'" class="container-fluid">
+  <h1 class="h3 mb-4 text-gray-800">Lista de Usuarios</h1>
+
+  <div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+      <h6 class="m-0 font-weight-bold text-primary">Usuarios Registrados</h6>
+      <a routerLink="/admin/usuarios/crear" class="btn btn-primary btn-sm">Crear Usuario</a>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div *ngFor="let u of usuarios" class="col-lg-3 col-md-4 col-sm-6 mb-4">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">{{ u.nombre }} {{ u.apellido }}</h5>
+              <p class="card-text">Rol: {{ u.rol }}</p>
+
+              <div class="dropdown">
+                <button class="btn btn-sm btn-info dropdown-toggle" type="button" id="dropdownMenuButton"
+                  data-bs-toggle="dropdown" aria-expanded="false">
+                  Opciones
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                  <li><a class="dropdown-item" (click)="editarUsuario(u)">Editar</a></li>
+                  <li><a class="dropdown-item" (click)="eliminarUsuario(u)">Eliminar</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="usuarios.length === 0" class="text-center text-muted">
+        No hay usuarios registrados.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Formulario genérico para crear o editar usuario -->
+<div *ngIf="modo === 'crear' || modo === 'editar'" class="container py-4">
+  <div class="card shadow border-0">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0">{{ modo === 'crear' ? 'Registrar Nuevo Usuario' : 'Editar Usuario' }}</h5>
+    </div>
+    <div class="card-body">
+      <form (ngSubmit)="modo === 'crear' ? registrar() : actualizar()" class="form-small">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="nombre" class="form-label">Nombre</label>
+            <input type="text" id="nombre" [(ngModel)]="nombre" name="nombre" class="form-control" required />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="apellido" class="form-label">Apellido</label>
+            <input type="text" id="apellido" [(ngModel)]="apellido" name="apellido" class="form-control" required />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="correo" class="form-label">Correo Electrónico</label>
+            <input type="email" id="correo" [(ngModel)]="correo" name="correo" class="form-control" required />
+          </div>
+          <!-- Campo Código País junto al Teléfono -->
+          <div class="col-md-3 mb-3">
+            <label for="codigo_pais" class="form-label">Código País</label>
+            <input type="text" id="codigo_pais" [(ngModel)]="codigo_pais" name="codigo_pais" class="form-control form-control-sm" maxlength="4" />
+          </div>
+          <div class="col-md-3 mb-3">
+            <label for="telefono" class="form-label">Teléfono</label>
+            <input type="text" id="telefono" [(ngModel)]="telefono" name="telefono" class="form-control form-control-sm" />
+          </div>
+          <div class="col-md-6 mb-3" *ngIf="modo === 'crear'">
+            <label for="contrasena" class="form-label">Contraseña</label>
+            <input type="password" id="contrasena" [(ngModel)]="contrasena" name="contrasena" class="form-control" required />
+          </div>
+          <div class="col-md-6 mb-3" *ngIf="modo === 'crear'">
+            <label for="confirmarContrasena" class="form-label">Confirmar Contraseña</label>
+            <input type="password" id="confirmarContrasena" [(ngModel)]="confirmarContrasena" name="confirmarContrasena" class="form-control" required />
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <button type="submit" class="btn btn-success">
+            {{ modo === 'crear' ? 'Registrar Usuario' : 'Actualizar Usuario' }}
+          </button>
+          <a routerLink="/admin/usuarios" class="btn btn-secondary ms-2">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+

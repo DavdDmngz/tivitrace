@@ -21,16 +21,31 @@ export class TopbarComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Obtener nombre del usuario desde el servicio
-    const nombre = this.authService.getNombreUsuario();
-    this.usuario = { nombre: nombre || 'Invitado' };
-
-    // Obtener el ID del usuario desde el servicio
+    // Obtener el ID del usuario desde el JWT
     this.usuarioId = this.authService.getUsuarioId();
-
-    // Cargar la imagen del usuario
-    this.cargarImagenUsuario();
-  }
+  
+    // Cargar los datos del usuario (nombre, apellido, imagen)
+    if (this.usuarioId) {
+      this.http.get(`http://localhost:3003/api/usuarios/${this.usuarioId}`).subscribe({
+        next: (data: any) => {
+          this.usuario = {
+            nombre: `${data.nombre} ${data.apellido}`,
+            imagenUrl: data.imagenUrl
+              ? `http://localhost:3003/img/usuarios/${data.imagenUrl}`
+              : `http://localhost:3003/img/usuarios/default.jpg`
+          };
+        },
+        error: () => {
+          console.error('Error al cargar los datos del usuario');
+        }
+      });
+    } else {
+      this.usuario = {
+        nombre: 'Invitado',
+        imagenUrl: `http://localhost:3003/img/usuarios/default.jpg`
+      };
+    }
+  }  
 
   // Método para cerrar sesión
   logout(): void {

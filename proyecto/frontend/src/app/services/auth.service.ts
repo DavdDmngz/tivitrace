@@ -37,11 +37,6 @@ export class AuthService {
     }
   }
 
-  getNombreUsuario(): string | null {
-    const decoded = this.getDecodedToken();
-    return decoded?.nombre && decoded?.apellido ? `${decoded.nombre} ${decoded.apellido}` : null;
-  }
-
   getRoles(): string[] {
     const decoded = this.getDecodedToken();
     return decoded?.roles || [];

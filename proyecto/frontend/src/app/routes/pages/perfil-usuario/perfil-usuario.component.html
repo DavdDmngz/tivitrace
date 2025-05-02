@@ -1,0 +1,106 @@
+<div class="container-fluid">
+
+  <!-- Título de Página -->
+  <h1 class="h3 mb-4 text-gray-800">Mi perfil</h1>
+
+  <div class="row">
+
+    <!-- Información Personal -->
+<div class="col-lg-6">
+  <div class="card shadow mb-4">
+    <div class="card-header py-3">
+      <h6 class="m-0 font-weight-bold text-primary">Información Personal</h6>
+    </div>
+    <div class="card-body">
+      <form (ngSubmit)="guardarCambios()">
+        <div class="form-group">
+          <label for="nombre">Nombre</label>
+          <input type="text" id="nombre" class="form-control" [(ngModel)]="usuario.nombre" name="nombre" required>
+        </div>
+
+        <div class="form-group">
+          <label for="apellido">Apellido</label>
+          <input type="text" id="apellido" class="form-control" [(ngModel)]="usuario.apellido" name="apellido" required>
+        </div>
+
+        <div class="form-group">
+          <label for="correo">Correo Electrónico</label>
+          <input type="email" id="correo" class="form-control" [(ngModel)]="usuario.correo" name="correo" required>
+        </div>
+
+        <div class="form-group">
+          <label for="telefono">Teléfono</label>
+          <div class="form-row">
+            <div class="col-md-4">
+              <input type="text" class="form-control" [value]="usuario.codigo_pais" readonly>
+            </div>
+            <div class="col-md-8">
+              <input type="tel" id="telefono" class="form-control" [(ngModel)]="usuario.telefono" name="telefono" required>
+            </div>
+          </div>
+        </div>               
+
+        <div class="form-group">
+          <label>Rol</label>
+          <p class="form-control-plaintext">{{ usuario.rol }}</p>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-2">Guardar Cambios</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+    <!-- Foto de Perfil -->
+    <div class="col-lg-6">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Foto de Perfil</h6>
+        </div>
+        <div class="card-body text-center">
+          <img [src]="usuario.imagenUrl ? usuario.imagenUrl : 'http://localhost:3003/img/usuarios/default.jpg'"
+               alt="Foto de perfil"
+               class="img-profile rounded-circle mb-3"
+               style="width: 150px; height: 150px;">
+          <form (ngSubmit)="subirFoto()" enctype="multipart/form-data">
+            <div class="form-group">
+              <input type="file" (change)="seleccionarImagen($event)" class="form-control-file mt-2">
+            </div>
+            <button type="submit" class="btn btn-success mt-2">Actualizar Foto</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Cambiar Contraseña -->
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Cambiar Contraseña</h6>
+        </div>
+        <div class="card-body">
+          <form (ngSubmit)="cambiarContrasena()">
+            <div class="form-group">
+              <label for="contrasenaActual">Contraseña Actual</label>
+              <input type="password" id="contrasenaActual" class="form-control" [(ngModel)]="formularioContrasena.actual" name="actual" required>
+            </div>
+            <div class="form-group">
+              <label for="nuevaContrasena">Nueva Contraseña</label>
+              <input type="password" id="nuevaContrasena" class="form-control" [(ngModel)]="formularioContrasena.nueva" name="nueva" required>
+            </div>
+            <div class="form-group">
+              <label for="confirmarContrasena">Confirmar Nueva Contraseña</label>
+              <input type="password" id="confirmarContrasena" class="form-control" [(ngModel)]="formularioContrasena.confirmar" name="confirmar" required>
+            </div>
+            <button type="submit" class="btn btn-warning mt-2">Cambiar Contraseña</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

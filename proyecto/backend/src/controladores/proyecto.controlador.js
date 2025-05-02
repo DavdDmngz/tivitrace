@@ -31,14 +31,18 @@ exports.obtenerProyectoPorId = async (req, res) => {
     }
 };
 
-// Crear un nuevo proyecto (sin progreso manual)
+// Crear un nuevo proyecto
 exports.crearProyecto = async (req, res) => {
     try {
         const { nombre, descripcion } = req.body;
 
-        const nuevoProyecto = await Proyecto.create({ 
-            nombre, 
-            descripcion 
+        const nuevoProyecto = await Proyecto.create({
+            nombre,
+            descripcion,
+            estado: 'en_progreso', // estado inicial
+            progreso: 0,
+            fecha_creacion: new Date(),
+            fecha_fin: null
         });
 
         res.status(201).json(nuevoProyecto);
@@ -47,21 +51,49 @@ exports.crearProyecto = async (req, res) => {
     }
 };
 
-// Actualizar un proyecto (sin actualizar el progreso directamente)
+// Actualizar un proyecto
 exports.actualizarProyecto = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre, descripcion } = req.body;
+        const { nombre, descripcion, fecha_fin, estado } = req.body;
 
         const proyecto = await Proyecto.findByPk(id);
         if (!proyecto) {
             return res.status(404).json({ error: 'Proyecto no encontrado' });
         }
 
-        await proyecto.update({ nombre, descripcion });
+        await proyecto.update({
+            nombre,
+            descripcion,
+            fecha_fin,
+            estado
+        });
+
         res.json(proyecto);
     } catch (error) {
         res.status(500).json({ error: 'Error al actualizar el proyecto', detalle: error.message });
+    }
+};
+
+// Finalizar un proyecto (opcional)
+exports.finalizarProyecto = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const proyecto = await Proyecto.findByPk(id);
+        if (!proyecto) {
+            return res.status(404).json({ error: 'Proyecto no encontrado' });
+        }
+
+        await proyecto.update({
+            estado: 'finalizado',
+            fecha_fin: new Date(),
+            progreso: 100
+        });
+
+        res.json({ mensaje: 'Proyecto finalizado correctamente', proyecto });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al finalizar el proyecto', detalle: error.message });
     }
 };
 

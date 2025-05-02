@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { ToastrService } from 'ngx-toastr';
 import { FormsModule } from '@angular/forms';
-import { AuthService } from '../../services/auth.service';  // Importa AuthService
+import { AuthService } from '../../../services/auth.service';  // Importa AuthService
 
 @Component({
   selector: 'app-perfil-usuario',
@@ -14,10 +14,14 @@ import { AuthService } from '../../services/auth.service';  // Importa AuthServi
 export class PerfilUsuarioComponent implements OnInit {
   usuario = {
     nombre: '',
+    apellido: '',
     correo: '',
+    codigo_pais: '',
+    telefono: '',
     imagenUrl: '',
-    rol: '' // <--- Nuevo campo para mostrar el rol
+    rol: ''
   };
+  
 
   formularioContrasena = {
     actual: '',
@@ -51,9 +55,10 @@ export class PerfilUsuarioComponent implements OnInit {
     this.http.get(`http://localhost:3003/api/usuarios/${this.usuarioId}`).subscribe({
       next: (data: any) => {
         this.usuario.nombre = data.nombre;
+        this.usuario.apellido = data.apellido;
         this.usuario.correo = data.correo;
-  
-        // Verifica si existe imagen y asigna la URL correcta
+        this.usuario.codigo_pais = data.codigo_pais;
+        this.usuario.telefono = data.telefono;
         this.usuario.imagenUrl = data.imagenUrl
           ? `http://localhost:3003/img/usuarios/${data.imagenUrl}`
           : `http://localhost:3003/img/usuarios/default.jpg`;
@@ -63,6 +68,7 @@ export class PerfilUsuarioComponent implements OnInit {
       }
     });
   }
+  
 
   obtenerRolDesdeJWT() {
     const roles = this.authService.getRoles();  // Utiliza el AuthService para obtener los roles
@@ -77,19 +83,23 @@ export class PerfilUsuarioComponent implements OnInit {
   }
 
   guardarCambios() {
-    this.http.put(`http://localhost:3003/api/usuarios/${this.usuarioId}`, {
+    const datosActualizados = {
       nombre: this.usuario.nombre,
+      apellido: this.usuario.apellido,
       correo: this.usuario.correo,
-    }).subscribe({
+      telefono: this.usuario.telefono
+    };
+  
+    this.http.put(`http://localhost:3003/api/usuarios/${this.usuarioId}`, datosActualizados).subscribe({
       next: () => {
         this.toastr.success('¡Datos guardados con éxito!');
-        window.location.reload();  // Recarga la página para reflejar los cambios
+        window.location.reload();
       },
       error: () => {
         this.toastr.error('Error al guardar los datos');
       }
     });
-  }
+  }  
 
   seleccionarImagen(event: Event) {
     const input = event.target as HTMLInputElement;

@@ -47,10 +47,7 @@ router.post(
             .isString().withMessage('El nombre debe ser una cadena de texto'),
         body('descripcion')
             .optional()
-            .isString().withMessage('La descripción debe ser una cadena de texto'),
-        body('progreso')
-            .optional()
-            .isFloat({ min: 0, max: 100 }).withMessage('El progreso debe estar entre 0 y 100')
+            .isString().withMessage('La descripción debe ser una cadena de texto')
     ],
     validarCampos,
     proyectoControlador.crearProyecto
@@ -71,12 +68,29 @@ router.put(
         body('descripcion')
             .optional()
             .isString().withMessage('La descripción debe ser una cadena de texto'),
-        body('progreso')
+        body('estado')
             .optional()
-            .isFloat({ min: 0, max: 100 }).withMessage('El progreso debe estar entre 0 y 100')
+            .isIn(['en_progreso', 'finalizado']).withMessage('El estado debe ser "en_progreso" o "finalizado"'),
+        body('fecha_fin')
+            .optional()
+            .isISO8601().withMessage('La fecha de fin debe tener un formato válido (ISO8601)')
     ],
     validarCampos,
     proyectoControlador.actualizarProyecto
+);
+
+// 📌 Finalizar un proyecto (solo administrador y supervisor)
+router.put(
+    '/:id/finalizar',
+    [
+        validarAutenticacion,
+        validarRol(['administrador', 'supervisor']),
+        param('id')
+            .notEmpty().withMessage('El ID es obligatorio')
+            .isInt({ min: 1 }).withMessage('El ID debe ser un número entero positivo')
+    ],
+    validarCampos,
+    proyectoControlador.finalizarProyecto
 );
 
 // 📌 Eliminar un proyecto (solo administrador y supervisor)
