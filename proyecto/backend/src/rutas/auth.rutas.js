@@ -48,5 +48,7 @@ router.post(
     authController.cambiarContrasena
 );
 
+// Ruta para renovar el token
+router.post('/refresh', authController.refreshToken);
 
 module.exports = router;

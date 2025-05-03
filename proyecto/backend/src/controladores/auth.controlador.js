@@ -54,23 +54,39 @@ exports.login = async (req, res) => {
 
 // Refrescar Token
 exports.refreshToken = async (req, res) => {
-    const { token } = req.body; // El refresh token
-  
-    try {
-      const payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-  
-      const nuevoAccessToken = generarAccessToken({
-        id: payload.id,
-        roles: payload.roles
-      });
-  
-      return res.json({ accessToken: nuevoAccessToken });
-  
-    } catch (error) {
-      return res.status(401).json({ error: 'Refresh token inválido o expirado' });
+    const { refreshToken } = req.body; // El refresh token enviado desde el frontend
+
+    if (!refreshToken) {
+        return res.status(401).json({ error: 'Refresh token no proporcionado' });
     }
-  };
-  
+
+    try {
+        // Verificar el refreshToken
+        const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+
+        // Generar un nuevo accessToken
+        const nuevoAccessToken = generarAccessToken({
+            id: payload.id,
+            roles: payload.roles,
+        });
+
+        // Opcional: Generar un nuevo refreshToken
+        const nuevoRefreshToken = generarRefreshToken({
+            id: payload.id,
+            roles: payload.roles,
+        });
+
+        // Enviar los nuevos tokens al cliente
+        return res.json({
+            accessToken: nuevoAccessToken,
+            refreshToken: nuevoRefreshToken, // Opcional
+        });
+    } catch (error) {
+        console.error('Error al verificar el refresh token:', error);
+        return res.status(401).json({ error: 'Refresh token inválido o expirado' });
+    }
+};
+
 
 // Solicitar clave temporal
 exports.solicitarClaveTemporal = async (req, res) => {
