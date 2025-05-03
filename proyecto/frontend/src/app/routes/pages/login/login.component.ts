@@ -28,21 +28,25 @@ export class LoginComponent {
       contrasena: this.contrasena
     }).subscribe({
       next: (res) => {
-        localStorage.setItem('jwt', res.token);
+        const token = res.accessToken;
+
+        localStorage.setItem('jwt', token); // mismo nombre que antes
+        localStorage.setItem('refreshToken', res.refreshToken);
+
         this.toastr.success('¡Inicio de sesión exitoso!', 'Bienvenido');
 
         // ✅ Decodificar el token para obtener el ID y roles
-        const decodedToken: any = jwtDecode(res.token);
+        const decodedToken: any = jwtDecode(token);
         const roles: string[] = decodedToken.roles || [];
-        const userId: string = decodedToken.id; // Obtener el ID del usuario del JWT
+        const userId: string = decodedToken.id;
 
-        // ✅ Redirigir según rol (ajusta según los nombres reales de tus rutas y roles)
+        // ✅ Redirigir según rol
         if (roles.includes('Administrador')) {
           this.router.navigate(['/admin/dashboard']);
         } else if (roles.includes('Supervisor')) {
           this.router.navigate(['/supervisor/dashboard']);
         } else {
-          this.router.navigate([`/home`]);
+          this.router.navigate(['/home']);
         }
       },
       error: (err) => {

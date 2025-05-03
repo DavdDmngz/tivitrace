@@ -1,16 +1,14 @@
 const jwt = require('jsonwebtoken');
 
-// Función para generar el token recibiendo el payload directamente
-const generarToken = (payload) => {
-  try {
-    return jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
-  } catch (error) {
-    throw new Error('Error al generar el token: ' + error.message);
-  }
+const generarAccessToken = (payload) => {
+  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15m' }); // corto plazo
 };
 
-module.exports = { generarToken };
+const generarRefreshToken = (payload) => {
+  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' }); // largo plazo
+};
+
+module.exports = {
+  generarAccessToken,
+  generarRefreshToken
+};

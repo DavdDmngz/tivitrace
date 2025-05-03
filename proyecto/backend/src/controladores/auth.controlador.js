@@ -6,65 +6,71 @@ const ModeloRolUsuario = require('../modelos/rol_usuario.modelo');
 const ModeloRolPermiso = require('../modelos/rol_permiso.modelo');
 const ModeloPermiso = require('../modelos/permiso.modelo');
 const { enviarCorreoRecuperacion } = require('../core/services/mail.service');
-const { generarToken } = require('../core/config/jwt.config')
+const { generarAccessToken, generarRefreshToken } = require('../core/config/jwt.config');
 
-// Login
+
 exports.login = async (req, res) => {
-    const { correo, contrasena } = req.body;
-    try {
-        const usuario = await Usuarios.findOne({
-            where: { correo },
-            include: {
-                model: Roles,
-                as: 'roles',
-                through: { attributes: [] }
-            }
-        });
+  const { correo, contrasena } = req.body;
+  try {
+    const usuario = await Usuarios.findOne({
+      where: { correo },
+      include: {
+        model: Roles,
+        as: 'roles',
+        through: { attributes: [] }
+      }
+    });
 
-        if (!usuario) {
-            return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
-        }
-
-        const esValida = await bcrypt.compare(contrasena, usuario.contrasena);
-        if (!esValida) {
-            return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
-        }
-
-        const roles = usuario.roles.map(rol => rol.nombre);
-
-        const payload = {
-        id: usuario.id,
-        nombre: usuario.nombre,
-        apellido: usuario.apellido,
-        correo: usuario.correo,
-        roles
-        };
-
-        const token = generarToken(payload);  // Generar el token con los nuevos datos
-        return res.json({ token });
-
-    } catch (error) {
-        console.error('Error en login:', error);
-        return res.status(500).json({ error: 'Error interno del servidor' });
+    if (!usuario) {
+      return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
     }
+
+    const esValida = await bcrypt.compare(contrasena, usuario.contrasena);
+    if (!esValida) {
+      return res.status(401).json({ error: 'Correo o contraseña incorrectos' });
+    }
+
+    const roles = usuario.roles.map(rol => rol.nombre);
+
+    const payload = {
+      id: usuario.id,
+      roles
+    };
+
+    const accessToken = generarAccessToken(payload);
+    const refreshToken = generarRefreshToken(payload);
+
+    // Puedes guardar el refresh token en BD si lo deseas para revocación
+    // await usuario.update({ refresh_token: refreshToken });
+
+    return res.json({ accessToken, refreshToken });
+
+  } catch (error) {
+    console.error('Error en login:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
 };
+
 
 // Refrescar Token
 exports.refreshToken = async (req, res) => {
-    const { token } = req.body;
+    const { token } = req.body; // El refresh token
+  
     try {
-        const payload = jwt.verify(token, JWT_SECRET);
-        const nuevoToken = generarToken({
-            id: payload.id,
-            nombre: payload.nombre,  // Incluir nombre al refrescar el token
-            correo: payload.correo,
-            roles: payload.roles
-        });
-        return res.json({ token: nuevoToken });
+      const payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+  
+      const nuevoAccessToken = generarAccessToken({
+        id: payload.id,
+        roles: payload.roles
+      });
+  
+      return res.json({ accessToken: nuevoAccessToken });
+  
     } catch (error) {
-        return res.status(401).json({ error: 'Token inválido o expirado' });
+      return res.status(401).json({ error: 'Refresh token inválido o expirado' });
     }
-};
+  };
+  
 
 // Solicitar clave temporal
 exports.solicitarClaveTemporal = async (req, res) => {
