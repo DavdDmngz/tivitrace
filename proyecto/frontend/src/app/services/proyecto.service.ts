@@ -10,9 +10,7 @@ export interface Proyecto {
   progreso?: number;
   fechaInicio?: string;
   fechaFin?: string | null;
-  creador?: string; // 👈 Agrega esta línea
 }
-
 
 @Injectable({ providedIn: 'root' })
 export class ProyectoService {
@@ -20,15 +18,25 @@ export class ProyectoService {
 
   constructor(private http: HttpClient) {}
 
-  // Obtener las cabeceras de autenticación con el token
-  private getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem('jwt');
-    return new HttpHeaders({
-      Authorization: token ? `Bearer ${token}` : '', // Asegúrate de que el token se envíe con 'Bearer'
-      'Content-Type': 'application/json'
-    });
+  // Obtener token desde el almacenamiento local
+  private getAuthToken(): string | null {
+    return localStorage.getItem('jwt'); // Asegúrate de que el token esté guardado en localStorage
   }
 
+  // Obtener los encabezados de autorización
+  private getAuthHeaders(): HttpHeaders {
+    const token = this.getAuthToken();
+    return token
+      ? new HttpHeaders({
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        })
+      : new HttpHeaders({
+          'Content-Type': 'application/json',
+        });
+  }
+
+  // Manejo de errores
   private handleError(error: any) {
     const message = error?.error?.message || 'Error inesperado del servidor';
     return throwError(() => new Error(message));
@@ -36,31 +44,41 @@ export class ProyectoService {
 
   // Obtener todos los proyectos
   obtenerProyectos(): Observable<Proyecto[]> {
-    return this.http.get<Proyecto[]>(this.apiUrl, { headers: this.getAuthHeaders(), withCredentials: true })
-      .pipe(catchError(this.handleError));
+    const headers = this.getAuthHeaders(); // Obtener los encabezados con JWT
+    return this.http.get<Proyecto[]>(this.apiUrl, { headers }).pipe(
+      catchError(this.handleError)
+    );
   }
 
   // Obtener proyecto por ID
   obtenerProyectoPorId(id: number): Observable<Proyecto> {
-    return this.http.get<Proyecto>(`${this.apiUrl}/${id}`, { headers: this.getAuthHeaders() })
-      .pipe(catchError(this.handleError));
+    const headers = this.getAuthHeaders(); // Obtener los encabezados con JWT
+    return this.http.get<Proyecto>(`${this.apiUrl}/${id}`, { headers }).pipe(
+      catchError(this.handleError)
+    );
   }
 
   // Crear un nuevo proyecto
   crearProyecto(proyecto: Partial<Proyecto>): Observable<Proyecto> {
-    return this.http.post<Proyecto>(this.apiUrl, proyecto, { headers: this.getAuthHeaders() })
-      .pipe(catchError(this.handleError));
+    const headers = this.getAuthHeaders(); // Obtener los encabezados con JWT
+    return this.http.post<Proyecto>(this.apiUrl, proyecto, { headers }).pipe(
+      catchError(this.handleError)
+    );
   }
 
   // Actualizar un proyecto existente
   actualizarProyecto(id: number, proyecto: Partial<Proyecto>): Observable<Proyecto> {
-    return this.http.put<Proyecto>(`${this.apiUrl}/${id}`, proyecto, { headers: this.getAuthHeaders() })
-      .pipe(catchError(this.handleError));
+    const headers = this.getAuthHeaders(); // Obtener los encabezados con JWT
+    return this.http.put<Proyecto>(`${this.apiUrl}/${id}`, proyecto, { headers }).pipe(
+      catchError(this.handleError)
+    );
   }
 
   // Eliminar un proyecto
   eliminarProyecto(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`, { headers: this.getAuthHeaders() })
-      .pipe(catchError(this.handleError));
+    const headers = this.getAuthHeaders(); // Obtener los encabezados con JWT
+    return this.http.delete<void>(`${this.apiUrl}/${id}`, { headers }).pipe(
+      catchError(this.handleError)
+    );
   }
 }

@@ -1,0 +1,161 @@
+<div class="container py-4" *ngIf="proyecto">
+  <!-- Título y acciones -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center">
+      <h2 *ngIf="editingField !== 'nombre'" class="me-2">{{ proyecto.nombre }}</h2>
+      <div *ngIf="editingField === 'nombre'" class="input-group me-2">
+        <input [(ngModel)]="nuevoValor" class="form-control" />
+        <button class="btn btn-success btn-sm" (click)="guardarEdicion()">Guardar</button>
+        <button class="btn btn-secondary btn-sm" (click)="cancelarEdicion()">Cancelar</button>
+      </div>
+      <button class="btn btn-outline-secondary btn-sm" *ngIf="editingField !== 'nombre'" (click)="editarCampo('nombre')">
+        <i class="fas fa-edit"></i> Editar
+      </button>
+    </div>
+    <button class="btn btn-danger btn-sm" (click)="eliminarProyecto()">Eliminar proyecto</button>
+  </div>
+
+  <!-- Información del proyecto -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <!-- Descripción -->
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <p *ngIf="editingField !== 'descripcion'" class="me-2">
+          <strong>Descripción:</strong> {{ proyecto.descripcion || 'Sin descripción' }}
+        </p>
+        <div *ngIf="editingField === 'descripcion'" class="input-group me-2">
+          <input [(ngModel)]="nuevoValor" class="form-control" />
+          <button class="btn btn-success btn-sm" (click)="guardarEdicion()">Guardar</button>
+          <button class="btn btn-secondary btn-sm" (click)="cancelarEdicion()">Cancelar</button>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm" *ngIf="editingField !== 'descripcion'" (click)="editarCampo('descripcion')">
+          <i class="fas fa-edit"></i> Editar
+        </button>
+      </div>
+
+      <!-- Progreso -->
+      <div class="progress-wrapper mb-3">
+        <p><strong>Progreso:</strong></p>
+        <div class="progress">
+          <div class="progress-bar" [style.width.%]="proyecto.progreso || 0">
+            {{ proyecto.progreso || 0 }}%
+          </div>
+        </div>
+      </div>
+
+      <!-- Fechas -->
+      <p class="text-muted">
+        <strong>Inicio:</strong> {{ proyecto.fechaInicio || 'No definido' }} <br />
+        <strong>Fin estimada:</strong> {{ proyecto.fechaFin || 'No definida' }}
+      </p>
+    </div>
+  </div>
+
+  <!-- No hay tareas -->
+  <div *ngIf="noTareas" class="col-12">
+    <div class="card">
+      <div class="card-body text-center">
+        <h5 class="card-title">¡No hay tareas disponibles!</h5>
+        <p class="card-text">Parece que aún no has agregado tareas a este proyecto.</p>
+        <button class="btn btn-primary" (click)="crearTareaInline()">Crear tarea</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tareas estilo Kanban -->
+  <h4 class="mb-3" *ngIf="!noTareas">Tareas del proyecto</h4>
+
+  <!-- Mostrar solo si hay tareas -->
+  <div class="row" *ngIf="!noTareas">
+    <!-- Estado: Por hacer -->
+    <div class="col-md-4" (dragover)="dragOver($event)" (drop)="drop($event, 'pendiente')">
+      <h5 class="text-primary">Por hacer</h5>
+
+      <ng-container *ngFor="let tarea of tareasPorEstado('pendiente'); trackBy: trackById">
+        <div
+          class="card mb-2"
+          draggable="true"
+          (dragstart)="dragStart($event, tarea)"
+          (click)="irADetalleTarea(tarea)"
+        >
+          <div class="card-body p-2">
+            <div *ngIf="tareaEnEdicion === tarea">
+              <input
+                #nombreTareaInput
+                [(ngModel)]="tarea.nombre"
+                placeholder="Escribe un nombre para la tarea"
+                class="form-control"
+                (blur)="deseleccionarTarea(tarea)"
+                (keyup.enter)="guardarTareaInline(tarea)"
+              />
+            </div>
+            <div *ngIf="tareaEnEdicion !== tarea">
+              {{ tarea.nombre }}
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <div
+        *ngIf="tareas.length > 0 && !tareaEnEdicion"
+        class="card mb-2 bg-light text-center text-muted"
+        style="cursor: pointer;"
+        draggable="true"
+        (click)="crearTareaInline()"
+      >
+        <div class="card-body p-2">
+          Nueva tarea
+        </div>
+      </div>
+    </div>
+
+    <!-- Estado: En progreso -->
+    <div class="col-md-4" (dragover)="dragOver($event)" (drop)="drop($event, 'en progreso')">
+      <h5 class="text-warning">En progreso</h5>
+      <ng-container *ngFor="let tarea of tareasPorEstado('en progreso'); trackBy: trackById">
+        <div
+          class="card mb-2"
+          draggable="true"
+          (dragstart)="dragStart($event, tarea)"
+          (click)="irADetalleTarea(tarea)"
+        >
+          <div class="card-body p-2">
+            <div *ngIf="tareaEnEdicion === tarea">
+              <input [(ngModel)]="tarea.nombre" (blur)="guardarTareaInline(tarea)" class="form-control" />
+            </div>
+            <div *ngIf="tareaEnEdicion !== tarea">
+              {{ tarea.nombre }}
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+
+    <!-- Estado: Finalizadas -->
+    <div class="col-md-4" (dragover)="dragOver($event)" (drop)="drop($event, 'finalizado')">
+      <h5 class="text-success">Finalizadas</h5>
+      <ng-container *ngFor="let tarea of tareasPorEstado('finalizado'); trackBy: trackById">
+        <div
+          class="card mb-2"
+          draggable="true"
+          (dragstart)="dragStart($event, tarea)"
+          (click)="irADetalleTarea(tarea)"
+        >
+          <div class="card-body p-2">
+            <div *ngIf="tareaEnEdicion === tarea">
+              <input [(ngModel)]="tarea.nombre" (blur)="guardarTareaInline(tarea)" class="form-control" />
+            </div>
+            <div *ngIf="tareaEnEdicion !== tarea">
+              {{ tarea.nombre }}
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>
+
+<!-- Cargando proyecto -->
+<div class="container" *ngIf="!proyecto">
+  <div class="alert alert-info">Cargando proyecto...</div>
+</div>

@@ -11283,4 +11283,23 @@
   body.sidebar-toggled footer.sticky-footer {
     width: 100%;
   }
+
+  .proyecto-hover {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: #e7e7ea;
+    color: black;              /* Texto blanco */
+    box-shadow: 0 0.5rem 1rem rgba(78, 115, 223, 0.3); /* Sombra azul suave */
+    border-radius: 0.35rem;
+    padding: 1rem;
+  }
+  
+  .proyecto-hover:hover {
+    color: white;              /* Texto blanco */
+    background-color: #4e73df; /* Azul SB Admin */
+    box-shadow: 0 0.75rem 1.25rem rgba(46, 89, 217, 0.4);
+  }
+
+  
+  
   

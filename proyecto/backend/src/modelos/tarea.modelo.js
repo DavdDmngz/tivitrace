@@ -34,9 +34,9 @@ const Tarea = sequelize.define('Tarea', {
         allowNull: true
     },
     estado: {
-        type: DataTypes.ENUM('Activo', 'En Curso', 'Finalizado'),
-        defaultValue: 'Activo'
-    }
+        type: DataTypes.ENUM('pendiente', 'en progreso', 'finalizado'),
+        defaultValue: 'pendiente'
+    }    
 }, {
     tableName: 'tareas',
     timestamps: false

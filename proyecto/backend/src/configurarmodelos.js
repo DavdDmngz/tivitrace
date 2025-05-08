@@ -10,28 +10,37 @@ const UsuarioTarea = require('./modelos/usuario_tarea.modelo');
 const Adjunto = require('./modelos/adjunto.modelo');
 const Permiso = require('./modelos/permiso.modelo');
 const RolPermiso = require('./modelos/rol_permiso.modelo');
+const Participante = require('./modelos/participante.modelo');
 
 async function configurarModelos({ sync = true } = {}) {
   try {
-    /** Relación Usuario <-> Rol (muchos a muchos) **/
+    // Usuario <-> Rol (muchos a muchos)
     Usuario.belongsToMany(Rol, { through: UsuarioRol, foreignKey: 'usuario_id', as: 'roles' });
     Rol.belongsToMany(Usuario, { through: UsuarioRol, foreignKey: 'rol_id', as: 'usuarios' });
 
-    /** Relación Rol <-> Permiso (muchos a muchos) **/
+    // Rol <-> Permiso (muchos a muchos)
     Rol.belongsToMany(Permiso, { through: RolPermiso, foreignKey: 'rol_id', as: 'permisos' });
     Permiso.belongsToMany(Rol, { through: RolPermiso, foreignKey: 'permiso_id', as: 'roles' });
 
-    /** Relación Proyecto <-> Tareas (uno a muchos) **/
+    // Proyecto <-> Tarea (uno a muchos)
     Proyecto.hasMany(Tarea, { foreignKey: 'proyecto_id', onDelete: 'CASCADE', as: 'tareas' });
     Tarea.belongsTo(Proyecto, { foreignKey: 'proyecto_id', as: 'proyecto' });
 
-    /** Relación Usuario <-> Tarea (muchos a muchos) **/
+    // Usuario <-> Tarea (muchos a muchos)
     Usuario.belongsToMany(Tarea, { through: UsuarioTarea, foreignKey: 'usuario_id', as: 'tareas' });
     Tarea.belongsToMany(Usuario, { through: UsuarioTarea, foreignKey: 'tarea_id', as: 'usuarios' });
 
-    /** Relación Tarea <-> Adjunto (uno a muchos) **/
+    // Tarea <-> Adjunto (uno a muchos)
     Tarea.hasMany(Adjunto, { foreignKey: 'tarea_id', onDelete: 'CASCADE', as: 'adjuntos' });
     Adjunto.belongsTo(Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
+
+    // Participante <-> Usuario (muchos a uno)
+    Participante.belongsTo(Usuario, { foreignKey: 'usuario_id', as: 'usuario' });
+    Usuario.hasMany(Participante, { foreignKey: 'usuario_id', as: 'participaciones' });
+
+    // Participante <-> Proyecto (muchos a uno)
+    Participante.belongsTo(Proyecto, { foreignKey: 'proyecto_id', as: 'proyecto' });
+    Proyecto.hasMany(Participante, { foreignKey: 'proyecto_id', as: 'participantes' });
 
     console.log("✅ Relaciones configuradas correctamente");
 
@@ -56,5 +65,6 @@ module.exports = {
     Adjunto,
     Permiso,
     RolPermiso,
+    Participante,
   },
 };

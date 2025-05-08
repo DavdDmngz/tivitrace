@@ -164,5 +164,27 @@ router.delete(
     validarCampos,
     adjuntoControlador.eliminarArchivo
 );
-
+// Cambiar solo el estado de una tarea (Drag and Drop)
+router.patch(
+    '/:id/estado',
+    validarAutenticacion,
+    validarRol(['administrador', 'supervisor']),
+    [
+        param('id')
+            .notEmpty().withMessage('El ID es obligatorio')
+            .isInt({ min: 1 }).withMessage('El ID debe ser un número entero positivo'),
+        body('estado')
+            .notEmpty().withMessage('El estado es obligatorio')
+            .isString().withMessage('El estado debe ser una cadena de texto')
+            .custom((value) => {
+                const estado = value.trim().toLowerCase();
+                if (!['pendiente', 'en progreso', 'finalizado'].includes(estado)) {
+                    throw new Error('Estado inválido');
+                }
+                return true;
+            }),
+    ],
+    validarCampos,
+    tareaControlador.cambiarEstadoTarea
+);
 module.exports = router;

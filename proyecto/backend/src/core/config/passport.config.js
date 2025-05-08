@@ -19,7 +19,7 @@ passport.use(
         include: {
           model: Rol,
           as: 'roles',
-          through: { attributes: [] },
+          through: { attributes: [] }, // evita datos de la tabla intermedia
         },
       });
 
@@ -34,19 +34,21 @@ passport.use(
   })
 );
 
+// Middleware para autenticación
 exports.validarAutenticacion = (req, res, next) => {
-  passport.authenticate('jwt', { session: false }, (err, user, info) => {
+  passport.authenticate('jwt', { session: false }, (err, user) => {
     if (err || !user) {
       return res.status(401).json({ mensaje: 'No autorizado' });
     }
 
     req.user = user;
-    req.usuario_id = user. id;
+    req.usuario_id = user.id; // importante: era "user. id" con espacio, eso es error
 
     next();
   })(req, res, next);
 };
 
+// Middleware para validar roles
 exports.validarRol = (rolesPermitidos = []) => {
   return (req, res, next) => {
     const usuario = req.user;

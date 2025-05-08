@@ -1,16 +1,7 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './routes/pages/login/login.component';
-import { RegistroComponent } from './routes/pages/registro/registro.component';
-import { RecuperarContrasenaComponent } from './routes/pages/forgot_password/forgot-password.component';
-import { HomeComponent } from './routes/pages/home/home.component';
-import { PerfilUsuarioComponent } from './routes/pages/perfil-usuario/perfil-usuario.component';
-import { MainLayoutComponent } from './layout/layout.component';
 import { AuthGuard } from './guards/auth.guard';
 import { PublicGuard } from './guards/public.guard';
 import { roleGuard } from './guards/role.guard';
-import { UsuarioComponent } from './routes/admin/usuarios/usuarios.component';
-import { ProyectoComponent } from './routes/admin/proyectos/proyecto.component';
-
 
 export const routes: Routes = [
   {
@@ -21,37 +12,37 @@ export const routes: Routes = [
 
   {
     path: 'login',
-    component: LoginComponent,
+    loadComponent: () => import('./routes/pages/login/login.component').then(m => m.LoginComponent),
     canActivate: [PublicGuard],
     title: 'Iniciar Sesión',
   },
   {
     path: 'registro',
-    component: RegistroComponent,
+    loadComponent: () => import('./routes/pages/registro/registro.component').then(m => m.RegistroComponent),
     canActivate: [PublicGuard],
     title: 'Crear Cuenta',
   },
   {
     path: 'recuperar-contrasena',
-    component: RecuperarContrasenaComponent,
+    loadComponent: () => import('./routes/pages/forgot_password/forgot-password.component').then(m => m.RecuperarContrasenaComponent),
     canActivate: [PublicGuard],
     title: 'Recuperar Contraseña',
   },
 
-  // Rutas privadas
+  // Rutas privadas (autenticadas)
   {
     path: '',
-    component: MainLayoutComponent,
+    loadComponent: () => import('./layout/layout.component').then(m => m.MainLayoutComponent),
     canActivate: [AuthGuard],
     children: [
       {
         path: 'home',
-        component: HomeComponent,
+        loadComponent: () => import('./routes/pages/home/home.component').then(m => m.HomeComponent),
         title: 'Inicio',
       },
       {
         path: 'profile/:id',
-        component: PerfilUsuarioComponent,
+        loadComponent: () => import('./routes/pages/perfil-usuario/perfil-usuario.component').then(m => m.PerfilUsuarioComponent),
         title: 'Mi Perfil',
       },
       {
@@ -60,18 +51,39 @@ export const routes: Routes = [
         title: 'Gestión de Usuarios',
         children: [
           { path: '', redirectTo: 'listar', pathMatch: 'full' },
-          { path: 'listar', component: UsuarioComponent, title: 'Lista de Usuarios' },
-          { path: 'crear', component: UsuarioComponent, title: 'Crear Usuario' },  // Cambié a UsuarioComponent
-          { path: 'editar/:id', component: UsuarioComponent, title: 'Editar Usuario' } // Agregué la ruta para editar
+          {
+            path: 'listar',
+            loadComponent: () => import('./routes/admin/usuarios/usuarios.component').then(m => m.UsuarioComponent),
+            title: 'Lista de Usuarios',
+          },
+          {
+            path: 'crear',
+            loadComponent: () => import('./routes/admin/usuarios/usuarios.component').then(m => m.UsuarioComponent),
+            title: 'Crear Usuario',
+          },
+          {
+            path: 'editar/:id',
+            loadComponent: () => import('./routes/admin/usuarios/usuarios.component').then(m => m.UsuarioComponent),
+            title: 'Editar Usuario',
+          },
         ]
       },
       {
         path: 'admin/proyectos',
-        component: ProyectoComponent,
+        loadComponent: () => import('./routes/admin/proyectos/proyecto.component').then(m => m.ProyectoComponent),
         canActivate: [roleGuard(['administrador'])],
         title: 'Proyectos'
+      },
+      {
+        path: 'admin/proyectos/:id',
+        loadComponent: () => import('./routes/pages/proyecto-detalle/proyecto-detalle.component').then(m => m.DetalleProyectoComponent),
+        title: 'Detalle del Proyecto'
+      },
+      {
+        path: 'tarea/:id',
+        loadComponent: () => import('./routes/pages/detalle-tarea/detalle-tarea.component').then(m => m.DetalleTareaComponent),
+        title: 'Detalle de la Tarea'
       }
-      
     ]
   },
 

@@ -11,7 +11,7 @@ export function roleGuard(rolesPermitidos: string[]): CanActivateFn {
     const roles = authService.getRoles();  // Obtiene el/los roles del token
 
     if (!roles || roles.length === 0) {
-      router.navigate(['/no-autorizado']);
+      router.navigate(['/no-token']);
       return of(false);
     }
 
@@ -20,7 +20,7 @@ export function roleGuard(rolesPermitidos: string[]): CanActivateFn {
     );
 
     if (!tieneAcceso) {
-      router.navigate(['/no-autorizado']);
+      router.navigate(['/no-access']);
     }
 
     return of(tieneAcceso);

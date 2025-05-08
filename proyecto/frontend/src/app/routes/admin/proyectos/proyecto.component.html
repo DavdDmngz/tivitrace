@@ -1,97 +1,89 @@
 <div class="container py-4">
 
-  <h2 class="mb-4">Proyectos en curso</h2>
-
-  <div *ngIf="proyectos.length === 0" class="alert alert-info">
-    No hay proyectos en curso. <strong>¡Crea uno nuevo!</strong>
+  <!-- Indicador de carga -->
+  <div *ngIf="cargando" class="alert alert-info d-flex align-items-center gap-2">
+    <div class="spinner-border text-info" role="status" style="width: 1.5rem; height: 1.5rem;">
+      <span class="visually-hidden"></span>
+    </div>
+    <span>Cargando proyectos...</span>
   </div>
 
-  <div *ngFor="let proyecto of proyectos" class="card mb-3">
-    <div class="card-body">
-      <h5 class="card-title">Proyecto: {{ proyecto.nombre }}</h5>
-      <p class="card-text">Descripción: {{ proyecto.descripcion || 'Sin descripción' }}</p>
-      <p class="card-text">Estado:
-        <span class="badge bg-warning">En progreso</span>
-      </p>
-      <div class="progress mb-2">
-        <div class="progress-bar" [style.width.%]="proyecto.progreso || 0">
-          {{ proyecto.progreso || 0 }}%
+  <!-- Contenido principal -->
+  <div *ngIf="!cargando">
+    <h2 class="mb-4">Proyectos en curso</h2>
+
+    <div *ngIf="proyectos.length === 0" class="alert alert-info">
+      No hay proyectos en curso. <strong>¡Crea uno nuevo!</strong>
+    </div>
+
+    <!-- Proyectos en curso -->
+    <div *ngFor="let proyecto of proyectos"
+        class="card mb-3 shadow-sm proyecto-hover"
+        [routerLink]="['/admin/proyectos', proyecto.id]">
+      <div class="card-body">
+        <h5 class="card-title">{{ proyecto.nombre }}</h5>
+        <p class="card-text">Estado:
+          <span class="badge bg-warning">En progreso</span>
+        </p>
+        <div class="progress mb-2">
+          <div class="progress-bar" [style.width.%]="proyecto.progreso || 0">
+            {{ proyecto.progreso || 0 }}%
+          </div>
         </div>
       </div>
-      <p class="card-text text-muted">
-        {{ proyecto.fechaInicio || 'Sin fecha inicio' }} -
-        {{ proyecto.fechaFin || 'Sin fecha fin' }}
-      </p>
+    </div>
 
-      <!-- Opciones siempre visibles -->
-      <div class="dropdown">
-        <button class="btn btn-sm btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
-          Opciones
-        </button>
-        <ul class="dropdown-menu">
-          <li><a class="dropdown-item" [routerLink]="['/proyectos', proyecto.id]">Ver más</a></li>
-          <li><a class="dropdown-item" href="#" (click)="eliminarProyecto(proyecto.id)">Eliminar</a></li>
-        </ul>
+    <hr class="my-5" />
+
+    <h2 class="mb-4">Proyectos finalizados</h2>
+
+    <div *ngIf="proyectosFinalizados.length === 0" class="alert alert-secondary">
+      Aún no hay ningún proyecto finalizado.
+    </div>
+
+    <!-- Proyectos finalizados -->
+    <div *ngFor="let proyecto of proyectosFinalizados" 
+        class="card mb-3 border-success cursor-pointer"
+        [routerLink]="['/admin/proyectos', proyecto.id]" 
+        style="text-decoration: none; color: inherit;">
+      <div class="card-body">
+        <h5 class="card-title">Proyecto: {{ proyecto.nombre }}</h5>
+        <p class="card-text">Descripción: {{ proyecto.descripcion || 'Sin descripción' }}</p>
+        <p class="card-text">
+          Estado: <span class="badge bg-success">Finalizado</span>
+        </p>
+        <p class="card-text text-muted">
+          {{ proyecto.fechaInicio || 'Sin fecha inicio' }} - 
+          {{ proyecto.fechaFin || 'Sin fecha fin' }}
+        </p>
+      </div>
+    </div>
+
+    <hr class="my-5" />
+
+    <!-- Formulario de creación visible por defecto -->
+    <div class="card mt-5">
+      <div class="card-body">
+        <h5 class="card-title">Crear nuevo proyecto</h5>
+        <form (ngSubmit)="crearProyecto()">
+          <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre del proyecto</label>
+            <input id="nombre" [(ngModel)]="proyectoNuevo.nombre" name="nombre" type="text" class="form-control" required />
+          </div>
+
+          <div class="mb-3">
+            <label for="descripcion" class="form-label">Descripción</label>
+            <textarea id="descripcion" [(ngModel)]="proyectoNuevo.descripcion" name="descripcion" class="form-control"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="fechaFin" class="form-label">Fecha de finalización (opcional)</label>
+            <input id="fechaFin" [(ngModel)]="proyectoNuevo.fechaFin" name="fechaFin" type="date" class="form-control" />
+          </div>
+
+          <button type="submit" class="btn btn-primary" [disabled]="!proyectoNuevo.nombre">Crear Proyecto</button>
+        </form>
       </div>
     </div>
   </div>
-
-  <hr class="my-5" />
-
-  <h2 class="mb-4">Proyectos finalizados</h2>
-
-  <div *ngIf="proyectosFinalizados.length === 0" class="alert alert-secondary">
-    Aún no hay ningún proyecto finalizado.
-  </div>
-
-  <div *ngFor="let proyecto of proyectosFinalizados" class="card mb-3 border-success">
-    <div class="card-body">
-      <h5 class="card-title">Proyecto: {{ proyecto.nombre }}</h5>
-      <p class="card-text">Descripción: {{ proyecto.descripcion || 'Sin descripción' }}</p>
-      <p class="card-text">
-        Estado: <span class="badge bg-success">Finalizado</span>
-      </p>
-      <p class="card-text text-muted">
-        {{ proyecto.fechaInicio || 'Sin fecha inicio' }} -
-        {{ proyecto.fechaFin || 'Sin fecha fin' }}
-      </p>
-      <div class="dropdown">
-        <button class="btn btn-sm btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
-          Opciones
-        </button>
-        <ul class="dropdown-menu">
-          <li><a class="dropdown-item" [routerLink]="['/proyectos', proyecto.id]">Ver más</a></li>
-          <li><a class="dropdown-item" href="#" (click)="eliminarProyecto(proyecto.id)">Eliminar</a></li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <hr class="my-5" />
-
-  <!-- Formulario de creación visible por defecto -->
-  <div class="card mt-5">
-    <div class="card-body">
-      <h5 class="card-title">Crear nuevo proyecto</h5>
-      <form (ngSubmit)="crearProyecto()">
-        <div class="mb-3">
-          <label for="nombre" class="form-label">Nombre del proyecto</label>
-          <input id="nombre" [(ngModel)]="proyectoNuevo.nombre" name="nombre" type="text" class="form-control" required />
-        </div>
-      
-        <div class="mb-3">
-          <label for="descripcion" class="form-label">Descripción</label>
-          <textarea id="descripcion" [(ngModel)]="proyectoNuevo.descripcion" name="descripcion" class="form-control"></textarea>
-        </div>
-      
-        <div class="mb-3">
-          <label for="fechaFin" class="form-label">Fecha de finalización (opcional)</label>
-          <input id="fechaFin" [(ngModel)]="proyectoNuevo.fechaFin" name="fechaFin" type="date" class="form-control" />
-        </div>
-      
-        <button type="submit" class="btn btn-primary" [disabled]="!proyectoNuevo.nombre">Crear Proyecto</button>
-      </form>      
-    </div>
-  </div>
-
 </div>

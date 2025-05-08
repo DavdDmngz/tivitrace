@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 
 const generarAccessToken = (payload) => {
-  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRATION_ACCESS_DEV }); // Usar variable de entorno
+  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRATION_ACCESS }); // Usar variable de entorno
 };
 
 const generarRefreshToken = (payload) => {

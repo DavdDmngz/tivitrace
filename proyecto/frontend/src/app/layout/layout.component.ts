@@ -1,4 +1,3 @@
-// main-layout.component.ts
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
@@ -16,4 +15,11 @@ import { SidebarComponent } from '../layout/sidebar/sidebar.component';
   ],
   templateUrl: './layout.component.html',
 })
-export class MainLayoutComponent {}
+export class MainLayoutComponent {
+  sidebarToggled = false;
+
+  // Método para alternar el estado del sidebar
+  toggleSidebar(): void {
+    this.sidebarToggled = !this.sidebarToggled;
+  }
+}
