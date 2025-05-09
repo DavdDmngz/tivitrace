@@ -21,6 +21,13 @@ interface Usuario {
   correo: string;
 }
 
+interface Participante {
+  id: number;
+  usuario: Usuario;
+  proyecto_id: number;
+  tarea_id: number;
+}
+
 @Component({
   selector: 'app-detalle-tarea',
   standalone: true,
@@ -31,7 +38,7 @@ export class DetalleTareaComponent implements OnInit {
   tareaId!: number;
   tarea!: Tarea;
 
-  participantes: string[] = [];
+  participantes: Participante[] = [];
   nuevoParticipante: string = '';
   archivosAdjuntos: File[] = [];
 
@@ -62,11 +69,23 @@ export class DetalleTareaComponent implements OnInit {
     this.http.get<Tarea>(`http://localhost:3003/api/tareas/${this.tareaId}`).subscribe({
       next: (data) => {
         this.tarea = data;
+        this.cargarParticipantes();
       },
       error: (err) => {
         console.error('Error al cargar la tarea:', err);
         this.router.navigate(['/proyectos']);
       },
+    });
+  }
+
+  cargarParticipantes(): void {
+    this.http.get<Participante[]>(`http://localhost:3003/api/participantes?tarea_id=${this.tareaId}`).subscribe({
+      next: (data) => {
+        this.participantes = data;
+      },
+      error: (err) => {
+        console.error('Error al cargar participantes:', err);
+      }
     });
   }
 
@@ -109,7 +128,14 @@ export class DetalleTareaComponent implements OnInit {
     this.http.post(`http://localhost:3003/api/participantes`, payload).subscribe({
       next: () => {
         alert('Participante agregado exitosamente');
-        this.participantes.push(`${this.usuarioSeleccionado!.nombre} ${this.usuarioSeleccionado!.apellido}`);
+        // Crear el nuevo participante
+        const nuevoParticipante: Participante = {
+          id: this.usuarioSeleccionado?.id ?? 0,
+          usuario: this.usuarioSeleccionado!, // Aquí se pasa el objeto completo
+          proyecto_id: this.tarea.proyecto_id,
+          tarea_id: this.tarea.id
+        };
+        this.participantes.push(nuevoParticipante);
         this.usuarioSeleccionado = undefined;
         this.nuevoParticipante = '';
       },
@@ -117,9 +143,10 @@ export class DetalleTareaComponent implements OnInit {
     });
   }
 
-  eliminarParticipante(nombre: string): void {
-    this.participantes = this.participantes.filter(p => p !== nombre);
-    // Realiza una petición para eliminar el participante en el backend también si es necesario
+  eliminarParticipante(participante: Participante): void {
+    this.participantes = this.participantes.filter(p => p.id !== participante.id);
+    // Aquí puedes agregar una petición DELETE si tu backend lo permite
+    // this.http.delete(`http://localhost:3003/api/participantes/${participante.id}`).subscribe(...);
   }
 
   onArchivoSeleccionado(event: Event): void {

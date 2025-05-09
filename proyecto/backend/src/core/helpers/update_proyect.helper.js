@@ -13,7 +13,7 @@ async function actualizarProgresoProyecto(proyectoId) {
     const tareasFinalizadas = await Tarea.count({
       where: {
         proyecto_id: proyectoId,
-        estado: 'Finalizado'
+        estado: 'finalizado'
       }
     });
 

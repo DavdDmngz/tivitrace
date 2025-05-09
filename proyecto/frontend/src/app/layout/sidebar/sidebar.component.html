@@ -1,94 +1,85 @@
 <!-- Sidebar -->
 <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
-    <!-- Sidebar - Brand -->
-    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="/dashboard">
-        <div class="sidebar-brand-icon rotate-n-15">
-            <i class="fas fa-tasks"></i>
-        </div>
-        <div class="sidebar-brand-text mx-3">Mi Kanban</div>
+    <!-- Marca -->
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" [routerLink]="'/home'">
+      <div class="sidebar-brand-icon rotate-n-15">
+        <i class="fas fa-tasks"></i>
+      </div>
+      <div class="sidebar-brand-text mx-3">Mi Kanban</div>
     </a>
-
-    <!-- Divider -->
+  
     <hr class="sidebar-divider my-0">
-
-    <!-- Nav Item - Dashboard -->
+  
+    <!-- Inicio -->
     <li class="nav-item">
-        <a class="nav-link" [routerLink]="'/home'">
-            <i class="fas fa-fw fa-home"></i>
-            <span>Inicio</span>
-        </a>
-    </li>    
-
-    <!-- Divider -->
+      <a class="nav-link" [routerLink]="'/home'">
+        <i class="fas fa-home"></i>
+        <span>Inicio</span>
+      </a>
+    </li>
+  
     <hr class="sidebar-divider">
-
-    <!-- Heading -->
-    <div class="sidebar-heading">
-        Proyectos y Tareas
-    </div>
-
-    <!-- Nav Item - Proyectos -->
-    <li class="nav-item">
-        <a class="nav-link" [routerLink]="['/admin/proyectos']">
-          <i class="fas fa-fw fa-folder-open"></i>
-          <span>Proyectos</span>
-        </a>
-      </li>      
-
-    <!-- Nav Item - Tareas -->
-    <li class="nav-item">
-        <a class="nav-link" href="/tareas">
-            <i class="fas fa-fw fa-tasks"></i>
-            <span>Mis Tareas</span>
-        </a>
+  
+    <!-- Proyectos y Tareas -->
+    <div class="sidebar-heading">Gestión de Proyectos</div>
+  
+    <!-- Proyectos (Solo Admin) -->
+    <li *ngIf="isUser" class="nav-item">
+      <a class="nav-link" [routerLink]="'/admin/proyectos'">
+        <i class="fas fa-folder-open"></i>
+        <span>Proyectos</span>
+      </a>
     </li>
-
-    <!-- Divider -->
+  
+    <!-- Mis Tareas (Todos los usuarios) -->
+    <li *ngIf="isUser || isAdmin" class="nav-item">
+      <a class="nav-link" [routerLink]="'/tarea/1'"> <!-- Esto puede hacerse dinámico -->
+        <i class="fas fa-tasks"></i>
+        <span>Mis Tareas</span>
+      </a>
+    </li>
+  
     <hr class="sidebar-divider">
-
-    <!-- Heading para Admin -->
-    <div class="sidebar-heading">
-        Administración
-    </div>
-
-    <!-- Nav Item - Gestión de Usuarios -->
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUsuarios"
-            aria-expanded="true" aria-controls="collapseUsuarios">
-            <i class="fas fa-fw fa-users"></i>
-            <span>Usuarios</span>
-        </a>
-        <div id="collapseUsuarios" class="collapse" aria-labelledby="headingUsuarios" data-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <a class="collapse-item" [routerLink]="'/admin/usuarios'">Lista de Usuarios</a>
-                <a class="collapse-item" [routerLink]="'/admin/usuarios/crear'">Crear Usuarios</a>
-            </div>
+  
+    <!-- Administración (Solo Admin) -->
+    <div *ngIf="isAdmin" class="sidebar-heading">Administración</div>
+  
+    <!-- Usuarios (Solo Admin) -->
+    <li *ngIf="isAdmin" class="nav-item">
+      <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUsuarios"
+        aria-expanded="false" aria-controls="collapseUsuarios">
+        <i class="fas fa-users"></i>
+        <span>Usuarios</span>
+      </a>
+      <div id="collapseUsuarios" class="collapse" aria-labelledby="headingUsuarios" data-parent="#accordionSidebar">
+        <div class="bg-white py-2 collapse-inner rounded">
+          <a class="collapse-item" [routerLink]="'/admin/usuarios/listar'">Lista de Usuarios</a>
+          <a class="collapse-item" [routerLink]="'/admin/usuarios/crear'">Crear Usuario</a>
         </div>
+      </div>
     </li>
-
-    <!-- Nav Item - Roles y Permisos -->
-    <li class="nav-item">
-        <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseRoles"
-            aria-expanded="true" aria-controls="collapseRoles">
-            <i class="fas fa-fw fa-user-shield"></i>
-            <span>Roles y Permisos</span>
-        </a>
-        <div id="collapseRoles" class="collapse" aria-labelledby="headingRoles" data-parent="#accordionSidebar">
-            <div class="bg-white py-2 collapse-inner rounded">
-                <a class="collapse-item" href="/roles">Roles</a>
-                <a class="collapse-item" href="/permisos">Permisos</a>
-            </div>
+  
+    <!-- Roles y Permisos (Solo Admin) -->
+    <li *ngIf="isAdmin" class="nav-item">
+      <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseRoles"
+        aria-expanded="false" aria-controls="collapseRoles">
+        <i class="fas fa-user-shield"></i>
+        <span>Roles y Permisos</span>
+      </a>
+      <div id="collapseRoles" class="collapse" aria-labelledby="headingRoles" data-parent="#accordionSidebar">
+        <div class="bg-white py-2 collapse-inner rounded">
+          <a class="collapse-item" [routerLink]="'/roles'">Roles</a>
+          <a class="collapse-item" [routerLink]="'/permisos'">Permisos</a>
         </div>
+      </div>
     </li>
-
-    <!-- Divider -->
+  
     <hr class="sidebar-divider d-none d-md-block">
-
-    <!-- Sidebar Toggler -->
+  
+    <!-- Toggler -->
     <div class="text-center d-none d-md-inline">
-        <button class="rounded-circle border-0" id="sidebarToggle"></button>
+      <button class="rounded-circle border-0" id="sidebarToggle"></button>
     </div>
-
 </ul>
 <!-- End of Sidebar -->

@@ -35,6 +35,7 @@ export class DetalleProyectoComponent implements OnInit {
   tareaNombreOriginal: string | null = null;
   editingField: keyof Proyecto | null = null;
   nuevoValor: string = '';
+  valorOriginal: string = '';
 
   @ViewChild('nombreTareaInput') nombreTareaInput!: ElementRef<HTMLInputElement>;
 
@@ -62,7 +63,7 @@ export class DetalleProyectoComponent implements OnInit {
 
   cargarProyecto(): void {
     this.proyectoService.obtenerProyectoPorId(this.proyectoId).subscribe({
-      next: (proyecto) => (this.proyecto = proyecto),
+      next: (proyecto) => this.proyecto = proyecto,
       error: (err) => console.error('Error al cargar el proyecto:', err),
     });
   }
@@ -74,6 +75,7 @@ export class DetalleProyectoComponent implements OnInit {
       next: (data) => {
         this.tareas = data;
         this.noTareas = this.tareas.length === 0;
+        this.actualizarProgreso();
       },
       error: (err) => {
         console.error('Error al cargar tareas:', err);
@@ -87,10 +89,7 @@ export class DetalleProyectoComponent implements OnInit {
   }
 
   crearTareaInline(): void {
-    if (!this.proyectoId) {
-      console.error('No se puede crear tarea: ID de proyecto no definido');
-      return;
-    }
+    if (!this.proyectoId) return;
 
     const nueva: Tarea = {
       nombre: '',
@@ -138,7 +137,7 @@ export class DetalleProyectoComponent implements OnInit {
   }
 
   eliminarProyecto(): void {
-    if (!confirm('¿Deseas eliminar este proyecto? Esta acción no se puede deshacer.')) return;
+    if (!confirm('¿Deseas eliminar este proyecto?')) return;
 
     this.proyectoService.eliminarProyecto(this.proyectoId).subscribe({
       next: () => {
@@ -154,28 +153,39 @@ export class DetalleProyectoComponent implements OnInit {
 
     this.editingField = campo;
     this.nuevoValor = String(this.proyecto[campo] || '');
+    this.valorOriginal = this.nuevoValor;
   }
 
   guardarEdicion(): void {
-    if (!this.nuevoValor.trim()) return;
+    if (!this.nuevoValor.trim() || !this.editingField || this.editingField === 'progreso') return;
 
-    if (this.editingField && this.editingField !== 'progreso') {
-      if (this.proyecto.hasOwnProperty(this.editingField)) {
-        (this.proyecto[this.editingField] as any) = this.nuevoValor;
-      }
-
-      this.proyectoService.actualizarProyecto(this.proyectoId, this.proyecto).subscribe({
-        next: () => (this.editingField = null),
-        error: (err) => console.error('Error al actualizar el proyecto:', err),
-      });
+    if (this.proyecto.hasOwnProperty(this.editingField)) {
+      (this.proyecto[this.editingField] as any) = this.nuevoValor;
     }
+
+    this.proyectoService.actualizarProyecto(this.proyectoId, this.proyecto).subscribe({
+      next: () => (this.editingField = null),
+      error: (err) => console.error('Error al actualizar el proyecto:', err),
+    });
   }
 
   cancelarEdicion(): void {
     this.editingField = null;
+    this.nuevoValor = this.valorOriginal;
   }
 
-  // === Participantes ===
+  manejarBlurCampoEditable(): void {
+    if (this.nuevoValor !== this.valorOriginal) {
+      const confirmar = confirm('¿Deseas guardar los cambios?');
+      if (confirmar) {
+        this.guardarEdicion();
+      } else {
+        this.cancelarEdicion();
+      }
+    } else {
+      this.cancelarEdicion();
+    }
+  }
 
   agregarParticipante(): void {
     const nombre = this.nuevoParticipante.trim();
@@ -188,8 +198,6 @@ export class DetalleProyectoComponent implements OnInit {
   eliminarParticipante(nombre: string): void {
     this.participantes = this.participantes.filter(p => p !== nombre);
   }
-
-  // === DRAG & DROP ===
 
   dragOver(event: DragEvent): void {
     event.preventDefault();
@@ -223,7 +231,9 @@ export class DetalleProyectoComponent implements OnInit {
     tarea.estado = nuevoEstado;
 
     this.http.patch(`http://localhost:3003/api/tareas/${tarea.id}/estado`, { estado: nuevoEstado }).subscribe({
-      next: () => this.cargarTareas(),
+      next: () => {
+        this.cargarTareas();
+      },
       error: (err) => {
         console.error('Error al cambiar el estado de la tarea:', err);
         tarea.estado = estadoAnterior;
@@ -231,7 +241,21 @@ export class DetalleProyectoComponent implements OnInit {
     });
   }
 
-  // === TRACK BY ===
+  actualizarProgreso(): void {
+    const total = this.tareas.length;
+    if (total === 0) {
+      this.proyecto.progreso = 0;
+    } else {
+      const finalizadas = this.tareas.filter(t => t.estado === 'finalizado').length;
+      const porcentaje = Math.round((finalizadas / total) * 100);
+      this.proyecto.progreso = porcentaje;
+    }
+
+    this.proyectoService.actualizarProyecto(this.proyectoId, this.proyecto).subscribe({
+      next: () => {},
+      error: (err) => console.error('Error al actualizar progreso del proyecto:', err),
+    });
+  }
 
   trackById(index: number, tarea: Tarea): number {
     return tarea.id || index;
@@ -255,5 +279,9 @@ export class DetalleProyectoComponent implements OnInit {
     if (tarea.id) {
       this.router.navigate(['/tarea', tarea.id]);
     }
+  }
+
+  get progresoPorcentaje(): number {
+    return Math.min(Math.max(+(this.proyecto?.progreso ?? 0), 0), 100);
   }
 }

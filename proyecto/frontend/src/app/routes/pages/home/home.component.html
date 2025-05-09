@@ -1,6 +1,100 @@
-<div class="container-fluid">
-
-    <!-- Page Heading -->
-    <h1 class="h3 mb-4 text-gray-800">Home</h1>
-
+<div class="container mt-5">
+    <h2 class="text-left">Inicio</h2>
+  
+    <!-- Vista para Administrador -->
+    <div *ngIf="rol === 'administrador'">
+      <h2 class="text-primary mt-4">Estadísticas</h2>
+  
+      <div *ngIf="cargandoDashboard">Cargando datos del dashboard...</div>
+  
+      <div *ngIf="!cargandoDashboard && dashboard">
+        <!-- Contenedor de los cards sin márgenes entre columnas -->
+        <div class="row g-2">
+          <!-- Card de Usuarios por Rol -->
+          <div class="col-12 col-md-6 mb-3">
+            <div class="card h-100">
+              <div class="card-body p-3">
+                <h5 class="card-title">Usuarios por Rol:</h5>
+                <ul>
+                  <li *ngFor="let r of dashboard.usuariosPorRol">
+                    {{ r.rol?.nombre }}: {{ r.usuarios }}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Card de Total de Usuarios -->
+          <div class="col-12 col-md-6 mb-3">
+            <div class="card h-100">
+              <div class="card-body p-3">
+                <strong>Total de Usuarios:</strong> {{ dashboard.totalUsuarios }}
+              </div>
+            </div>
+          </div>
+  
+          <!-- Card de Proyectos por Estado -->
+          <div class="col-12 col-md-6 mb-3">
+            <div class="card h-100">
+              <div class="card-body p-3">
+                <h5 class="card-title">Proyectos por Estado:</h5>
+                <ul>
+                  <li *ngFor="let p of dashboard.proyectosPorEstado">
+                    {{ p.estado }}: {{ p.cantidad }}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Card de Tareas por Estado -->
+          <div class="col-12 col-md-6 mb-3">
+            <div class="card h-100">
+              <div class="card-body p-3">
+                <h5 class="card-title">Tareas por Estado:</h5>
+                <ul>
+                  <li *ngFor="let t of dashboard.tareasPorEstado">
+                    {{ t.estado }}: {{ t.cantidad }}
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Card de Progreso Promedio de Proyectos -->
+          <div class="col-12 mb-3">
+            <div class="card h-100">
+              <div class="card-body p-3">
+                <strong>Progreso Promedio de Proyectos:</strong> {{ dashboard.progresoPromedio }}%
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Implementación de gráficos -->
+        <div class="row g-2 mt-4">
+          <div class="col-12 col-md-6 mb-3">
+            <canvas id="proyectosChart"></canvas>
+          </div>
+          <div class="col-12 col-md-6 mb-3">
+            <canvas id="tareasChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Vista para Usuario -->
+    <div *ngIf="rol === 'usuario'">
+      <h2 class="text-success mt-4">Panel de Usuario</h2>
+      <ul class="list-group">
+        <li class="list-group-item">📄 Ver mis documentos</li>
+        <li class="list-group-item">✏️ Editar perfil</li>
+        <li class="list-group-item">🧾 Consultar historial</li>
+      </ul>
+    </div>
+  
+    <!-- Rol desconocido -->
+    <div *ngIf="!rol">
+      <p class="text-danger mt-4">❌ Rol no identificado. Contacta con soporte.</p>
+    </div>
 </div>

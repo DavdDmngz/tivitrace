@@ -40,7 +40,7 @@ router.get(
             .exists().withMessage('El ID del proyecto es obligatorio')
             .isInt({ min: 1 }).withMessage('Debe ser un número positivo'),
         query('tarea_id')
-            .exists().withMessage('El ID de la tarea es obligatorio')
+            .optional()
             .isInt({ min: 1 }).withMessage('Debe ser un número positivo'),
     ],
     validarCampos,

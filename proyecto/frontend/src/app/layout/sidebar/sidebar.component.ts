@@ -1,7 +1,8 @@
-// topbar.component.ts
-import { Component } from '@angular/core';
+// sidebar.component.ts
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../services/auth.service'; // ajusta el path
 
 @Component({
   selector: 'app-sidebar',
@@ -9,5 +10,14 @@ import { RouterModule } from '@angular/router';
   imports: [CommonModule, RouterModule],
   templateUrl: './sidebar.component.html'
 })
-export class SidebarComponent {}
+export class SidebarComponent implements OnInit {
+  isAdmin = false;
+  isUser = false;
 
+  constructor(private authService: AuthService) {}
+
+  ngOnInit(): void {
+    this.isAdmin = this.authService.hasRole('administrador');
+    this.isUser = this.authService.hasRole('usuario');
+  }
+}

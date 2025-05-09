@@ -10,13 +10,18 @@
 
   <!-- Contenido principal -->
   <div *ngIf="!cargando">
-    <h2 class="mb-4">Proyectos en curso</h2>
-
-    <div *ngIf="proyectos.length === 0" class="alert alert-info">
-      No hay proyectos en curso. <strong>¡Crea uno nuevo!</strong>
+    
+    <!-- Proyectos en curso -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="mb-0">Proyectos en curso</h2>
+      <button *ngIf="proyectos.length > 0" class="btn btn-primary" (click)="abrirModal()">Crear nuevo proyecto</button>
     </div>
 
-    <!-- Proyectos en curso -->
+    <div *ngIf="proyectos.length === 0" class="alert alert-info">
+      No hay proyectos en curso. 
+      <strong style="cursor: pointer; text-decoration: underline;" (click)="abrirModal()">¡Crea uno nuevo!</strong>
+    </div>
+
     <div *ngFor="let proyecto of proyectos"
         class="card mb-3 shadow-sm proyecto-hover"
         [routerLink]="['/admin/proyectos', proyecto.id]">
@@ -35,13 +40,13 @@
 
     <hr class="my-5" />
 
+    <!-- Proyectos finalizados -->
     <h2 class="mb-4">Proyectos finalizados</h2>
 
     <div *ngIf="proyectosFinalizados.length === 0" class="alert alert-secondary">
       Aún no hay ningún proyecto finalizado.
     </div>
 
-    <!-- Proyectos finalizados -->
     <div *ngFor="let proyecto of proyectosFinalizados" 
         class="card mb-3 border-success cursor-pointer"
         [routerLink]="['/admin/proyectos', proyecto.id]" 
@@ -58,14 +63,19 @@
         </p>
       </div>
     </div>
+  </div>
+</div>
 
-    <hr class="my-5" />
-
-    <!-- Formulario de creación visible por defecto -->
-    <div class="card mt-5">
-      <div class="card-body">
-        <h5 class="card-title">Crear nuevo proyecto</h5>
-        <form (ngSubmit)="crearProyecto()">
+<!-- Modal de creación de proyecto -->
+<div class="modal fade" id="modalCrearProyecto" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form (ngSubmit)="crearProyecto()">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalLabel">Crear nuevo proyecto</h5>
+          <button type="button" class="btn-close" aria-label="Cerrar" (click)="cerrarModal()"></button>
+        </div>
+        <div class="modal-body">
           <div class="mb-3">
             <label for="nombre" class="form-label">Nombre del proyecto</label>
             <input id="nombre" [(ngModel)]="proyectoNuevo.nombre" name="nombre" type="text" class="form-control" required />
@@ -80,10 +90,12 @@
             <label for="fechaFin" class="form-label">Fecha de finalización (opcional)</label>
             <input id="fechaFin" [(ngModel)]="proyectoNuevo.fechaFin" name="fechaFin" type="date" class="form-control" />
           </div>
-
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
           <button type="submit" class="btn btn-primary" [disabled]="!proyectoNuevo.nombre">Crear Proyecto</button>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   </div>
 </div>

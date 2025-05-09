@@ -18,6 +18,10 @@ async function configurarModelos({ sync = true } = {}) {
     Usuario.belongsToMany(Rol, { through: UsuarioRol, foreignKey: 'usuario_id', as: 'roles' });
     Rol.belongsToMany(Usuario, { through: UsuarioRol, foreignKey: 'rol_id', as: 'usuarios' });
 
+    // 👇 Relaciones directas para usar include desde UsuarioRol
+    UsuarioRol.belongsTo(Rol, { foreignKey: 'rol_id', as: 'rol' });
+    UsuarioRol.belongsTo(Usuario, { foreignKey: 'usuario_id', as: 'usuario' });
+
     // Rol <-> Permiso (muchos a muchos)
     Rol.belongsToMany(Permiso, { through: RolPermiso, foreignKey: 'rol_id', as: 'permisos' });
     Permiso.belongsToMany(Rol, { through: RolPermiso, foreignKey: 'permiso_id', as: 'roles' });
@@ -39,8 +43,12 @@ async function configurarModelos({ sync = true } = {}) {
     Usuario.hasMany(Participante, { foreignKey: 'usuario_id', as: 'participaciones' });
 
     // Participante <-> Proyecto (muchos a uno)
-    Participante.belongsTo(Proyecto, { foreignKey: 'proyecto_id', as: 'proyecto' });
-    Proyecto.hasMany(Participante, { foreignKey: 'proyecto_id', as: 'participantes' });
+    Participante.belongsTo(Proyecto, { foreignKey: 'proyecto_id', as: 'proyecto', onDelete: 'CASCADE' });
+    Proyecto.hasMany(Participante, { foreignKey: 'proyecto_id', as: 'participantes', onDelete: 'CASCADE' });
+
+    // Participante <-> Tarea (muchos a uno)
+    Participante.belongsTo(Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
+    Tarea.hasMany(Participante, { foreignKey: 'tarea_id', as: 'participantes' });
 
     console.log("✅ Relaciones configuradas correctamente");
 

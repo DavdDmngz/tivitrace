@@ -21,6 +21,7 @@ const proyectoRutas = require('./rutas/proyecto.rutas');
 const tareaRutas = require('./rutas/tarea.rutas');
 const authRutas = require('./rutas/auth.rutas');
 const participanteRutas = require('./rutas/participante.rutas'); // 👈 NUEVO
+const reportesRutas = require('./rutas/reporte.rutas'); // 👈 NUEVO
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use('/api/proyectos', proyectoRutas);
 app.use('/api/tareas', tareaRutas);
 app.use('/api/auth', authRutas);
 app.use('/api/participantes', participanteRutas); // 👈 NUEVO
+app.use('/api/reportes', reportesRutas); // 👈 NUEVO
 
 // Conexión a base de datos
 db.authenticate()

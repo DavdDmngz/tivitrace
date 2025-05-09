@@ -7,6 +7,8 @@ import { HttpClient } from '@angular/common/http';
 import { ProyectoService, Proyecto } from '../../../services/proyecto.service';
 import { AuthService } from '../../../services/auth.service';
 
+declare var bootstrap: any;
+
 @Component({
   selector: 'app-proyecto',
   standalone: true,
@@ -18,8 +20,9 @@ export class ProyectoComponent implements OnInit {
   proyectosFinalizados: Proyecto[] = [];
   proyectoNuevo: Partial<Proyecto> = this.resetProyecto();
   nombreUsuario: string = '';
-  cargando: boolean = true; // Nueva propiedad para controlar el estado de carga
-  tareaSeleccionada: Proyecto | null = null; // Nueva propiedad para gestionar la tarea seleccionada
+  cargando: boolean = true;
+  tareaSeleccionada: Proyecto | null = null;
+  modalInstance: any;
 
   constructor(
     private proyectoService: ProyectoService,
@@ -33,16 +36,16 @@ export class ProyectoComponent implements OnInit {
   }
 
   cargarProyectos(): void {
-    this.cargando = true; // Inicia carga
+    this.cargando = true;
     this.proyectoService.obtenerProyectos().subscribe({
       next: (proyectos) => {
         this.proyectos = proyectos.filter(p => (p.progreso ?? 0) < 100);
         this.proyectosFinalizados = proyectos.filter(p => p.progreso === 100);
-        this.cargando = false; // Finaliza carga
+        this.cargando = false;
       },
       error: (err) => {
         alert(err.message);
-        this.cargando = false; // Finaliza carga aunque haya error
+        this.cargando = false;
       },
     });
   }
@@ -81,6 +84,7 @@ export class ProyectoComponent implements OnInit {
         this.proyectos.push(nuevo);
         this.proyectoNuevo = this.resetProyecto();
         alert('Proyecto creado.');
+        this.cerrarModal(); // cerrar modal al crear exitosamente
       },
       error: (err) => alert(err.message),
     });
@@ -133,16 +137,29 @@ export class ProyectoComponent implements OnInit {
     });
   }
 
-  // Función para gestionar la tarea seleccionada
   seleccionarTarea(proyecto: Proyecto): void {
     if (this.tareaSeleccionada === proyecto) {
-      this.tareaSeleccionada = null; // Desmarcar la tarea si ya está seleccionada
+      this.tareaSeleccionada = null;
     } else {
-      this.tareaSeleccionada = proyecto; // Marcar la tarea como seleccionada
+      this.tareaSeleccionada = proyecto;
     }
   }
 
   private resetProyecto(): Partial<Proyecto> {
     return { nombre: '', descripcion: '', progreso: 0, fechaInicio: '', fechaFin: '' };
+  }
+
+  abrirModal(): void {
+    const modalElement = document.getElementById('modalCrearProyecto');
+    if (modalElement) {
+      this.modalInstance = new bootstrap.Modal(modalElement);
+      this.modalInstance.show();
+    }
+  }
+
+  cerrarModal(): void {
+    if (this.modalInstance) {
+      this.modalInstance.hide();
+    }
   }
 }
