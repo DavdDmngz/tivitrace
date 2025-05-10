@@ -69,13 +69,12 @@ export const routes: Routes = [
         ]
       },
       {
-        path: 'admin/proyectos',
+        path: 'proyectos',
         loadComponent: () => import('./routes/admin/proyectos/proyecto.component').then(m => m.ProyectoComponent),
-        canActivate: [roleGuard(['administrador'])],
         title: 'Proyectos'
       },
       {
-        path: 'admin/proyectos/:id',
+        path: 'proyectos/:id',
         loadComponent: () => import('./routes/pages/proyecto-detalle/proyecto-detalle.component').then(m => m.DetalleProyectoComponent),
         title: 'Detalle del Proyecto'
       },

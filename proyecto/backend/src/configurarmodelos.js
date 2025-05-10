@@ -50,6 +50,10 @@ async function configurarModelos({ sync = true } = {}) {
     Participante.belongsTo(Tarea, { foreignKey: 'tarea_id', as: 'tarea' });
     Tarea.hasMany(Participante, { foreignKey: 'tarea_id', as: 'participantes' });
 
+    // Relación entre Participante, Tarea y Proyecto (relación indirecta)
+    Proyecto.belongsToMany(Tarea, { through: Participante, foreignKey: 'proyecto_id', as: 'tareas_en_proyecto' });
+    Tarea.belongsToMany(Proyecto, { through: Participante, foreignKey: 'tarea_id', as: 'proyectos_con_tarea' });
+
     console.log("✅ Relaciones configuradas correctamente");
 
     if (sync) {
@@ -76,3 +80,4 @@ module.exports = {
     Participante,
   },
 };
+

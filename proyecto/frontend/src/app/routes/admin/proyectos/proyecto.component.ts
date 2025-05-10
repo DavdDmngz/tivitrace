@@ -23,6 +23,7 @@ export class ProyectoComponent implements OnInit {
   cargando: boolean = true;
   tareaSeleccionada: Proyecto | null = null;
   modalInstance: any;
+  esAdministrador: boolean = false; // Nueva propiedad para verificar si el usuario es administrador
 
   constructor(
     private proyectoService: ProyectoService,
@@ -33,6 +34,7 @@ export class ProyectoComponent implements OnInit {
   ngOnInit(): void {
     this.cargarProyectos();
     this.cargarNombreUsuario();
+    this.verificarRol(); // Nueva función para verificar el rol
   }
 
   cargarProyectos(): void {
@@ -64,6 +66,11 @@ export class ProyectoComponent implements OnInit {
           },
         });
     }
+  }
+
+  verificarRol(): void {
+    const usuarioId = this.authService.getUsuarioId();
+    this.esAdministrador = usuarioId === 'administrador'; // Ejemplo de verificación
   }
 
   crearProyecto(): void {

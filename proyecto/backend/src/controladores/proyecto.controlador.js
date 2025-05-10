@@ -1,14 +1,39 @@
 const Proyecto = require('../modelos/proyecto.modelo');
 const Tarea = require('../modelos/tarea.modelo');
+const Participante = require('../modelos/participante.modelo');
 
 // Obtener todos los proyectos con sus tareas
 exports.obtenerProyectos = async (req, res) => {
     try {
-        const proyectos = await Proyecto.findAll({
-            include: [{ model: Tarea, as: 'tareas' }]
-        });
+        const usuario = req.user;
+        console.log('Usuario:', usuario);
+
+        let proyectos;
+
+        const roles = usuario.roles || [];
+        const esAdmin = roles.some(r => r.nombre === 'administrador');
+
+        if (esAdmin) {
+            proyectos = await Proyecto.findAll({
+                include: [{ model: Tarea, as: 'tareas' }]
+            });
+        } else {
+            proyectos = await Proyecto.findAll({
+                include: [
+                    { model: Tarea, as: 'tareas' },
+                    {
+                        model: Participante,
+                        as: 'participantes',
+                        where: { usuario_id: usuario.id },
+                        attributes: [],
+                    },
+                ]
+            });
+        }
+
         res.json(proyectos);
     } catch (error) {
+        console.error('Error al obtener los proyectos:', error);
         res.status(500).json({ error: 'Error al obtener los proyectos', detalle: error.message });
     }
 };
@@ -39,7 +64,7 @@ exports.crearProyecto = async (req, res) => {
         const nuevoProyecto = await Proyecto.create({
             nombre,
             descripcion,
-            estado: 'en_progreso', // estado inicial
+            estado: 'en_progreso',
             progreso: 0,
             fecha_creacion: new Date(),
             fecha_fin: null
@@ -65,17 +90,18 @@ exports.actualizarProyecto = async (req, res) => {
         await proyecto.update({
             nombre,
             descripcion,
-            fecha_fin,
+            fecha_fin: fecha_fin === undefined ? null : fecha_fin,
             estado
         });
 
         res.json(proyecto);
     } catch (error) {
+        console.error('Error al actualizar el proyecto:', error);
         res.status(500).json({ error: 'Error al actualizar el proyecto', detalle: error.message });
     }
 };
 
-// Finalizar un proyecto (opcional)
+// Finalizar un proyecto
 exports.finalizarProyecto = async (req, res) => {
     try {
         const { id } = req.params;

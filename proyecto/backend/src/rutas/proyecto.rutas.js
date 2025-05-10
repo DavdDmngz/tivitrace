@@ -51,7 +51,6 @@ router.post(
     proyectoControlador.crearProyecto
 );
 
-// 📌 Actualizar un proyecto (solo administrador y supervisor)
 router.put(
     '/:id',
     [
@@ -70,7 +69,7 @@ router.put(
             .optional()
             .isIn(['en_progreso', 'finalizado']).withMessage('El estado debe ser "en_progreso" o "finalizado"'),
         body('fecha_fin')
-            .optional()
+            .optional({ nullable: true }) // Permite null o una fecha válida
             .isISO8601().withMessage('La fecha de fin debe tener un formato válido (ISO8601)')
     ],
     validarCampos,

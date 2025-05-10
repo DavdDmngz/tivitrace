@@ -55,11 +55,20 @@ export class DetalleProyectoComponent implements OnInit {
       this.router.navigate(['/proyectos']);
       return;
     }
-
+  
     this.proyectoId = +idParam;
-    this.cargarProyecto();
-    this.cargarTareas();
-  }
+  
+    this.proyectoService.obtenerProyectoPorId(this.proyectoId).subscribe({
+      next: (proyecto) => {
+        this.proyecto = proyecto;
+        this.cargarTareas(); // se asegura que this.proyecto ya esté definido
+      },
+      error: (err) => {
+        console.error('Error al cargar el proyecto:', err);
+        this.router.navigate(['/proyectos']);
+      },
+    });
+  }  
 
   cargarProyecto(): void {
     this.proyectoService.obtenerProyectoPorId(this.proyectoId).subscribe({
@@ -242,6 +251,11 @@ export class DetalleProyectoComponent implements OnInit {
   }
 
   actualizarProgreso(): void {
+    if (!this.proyecto) {
+      console.warn('Proyecto no cargado aún. No se puede actualizar el progreso.');
+      return;
+    }
+  
     const total = this.tareas.length;
     if (total === 0) {
       this.proyecto.progreso = 0;
@@ -250,12 +264,12 @@ export class DetalleProyectoComponent implements OnInit {
       const porcentaje = Math.round((finalizadas / total) * 100);
       this.proyecto.progreso = porcentaje;
     }
-
+  
     this.proyectoService.actualizarProyecto(this.proyectoId, this.proyecto).subscribe({
       next: () => {},
       error: (err) => console.error('Error al actualizar progreso del proyecto:', err),
     });
-  }
+  }  
 
   trackById(index: number, tarea: Tarea): number {
     return tarea.id || index;

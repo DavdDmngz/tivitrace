@@ -14,17 +14,18 @@
     <!-- Proyectos en curso -->
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2 class="mb-0">Proyectos en curso</h2>
-      <button *ngIf="proyectos.length > 0" class="btn btn-primary" (click)="abrirModal()">Crear nuevo proyecto</button>
+      <button *ngIf="esAdministrador && proyectos.length > 0" class="btn btn-primary" (click)="abrirModal()">Crear nuevo proyecto</button>
     </div>
 
     <div *ngIf="proyectos.length === 0" class="alert alert-info">
-      No hay proyectos en curso. 
-      <strong style="cursor: pointer; text-decoration: underline;" (click)="abrirModal()">¡Crea uno nuevo!</strong>
+      <span *ngIf="!esAdministrador">Parece que no formas parte de ningún proyecto, vuelve más tarde.</span>
+      <span *ngIf="esAdministrador">No hay proyectos en curso.</span>
+      <strong *ngIf="esAdministrador" style="cursor: pointer; text-decoration: underline;" (click)="abrirModal()">¡Crea uno nuevo!</strong>
     </div>
 
     <div *ngFor="let proyecto of proyectos"
         class="card mb-3 shadow-sm proyecto-hover"
-        [routerLink]="['/admin/proyectos', proyecto.id]">
+        [routerLink]="['/proyectos', proyecto.id]">
       <div class="card-body">
         <h5 class="card-title">{{ proyecto.nombre }}</h5>
         <p class="card-text">Estado:

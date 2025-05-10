@@ -25,8 +25,8 @@
     <div class="sidebar-heading">Gestión de Proyectos</div>
   
     <!-- Proyectos (Solo Admin) -->
-    <li *ngIf="isUser" class="nav-item">
-      <a class="nav-link" [routerLink]="'/admin/proyectos'">
+    <li *ngIf="isUser || isAdmin" class="nav-item">
+      <a class="nav-link" [routerLink]="'/proyectos'">
         <i class="fas fa-folder-open"></i>
         <span>Proyectos</span>
       </a>
