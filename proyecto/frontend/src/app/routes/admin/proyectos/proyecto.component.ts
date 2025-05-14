@@ -23,7 +23,7 @@ export class ProyectoComponent implements OnInit {
   cargando: boolean = true;
   tareaSeleccionada: Proyecto | null = null;
   modalInstance: any;
-  esAdministrador: boolean = false; // Nueva propiedad para verificar si el usuario es administrador
+  esAdministrador: boolean = false;
 
   constructor(
     private proyectoService: ProyectoService,
@@ -34,7 +34,7 @@ export class ProyectoComponent implements OnInit {
   ngOnInit(): void {
     this.cargarProyectos();
     this.cargarNombreUsuario();
-    this.verificarRol(); // Nueva función para verificar el rol
+    this.verificarRol();
   }
 
   cargarProyectos(): void {
@@ -69,12 +69,11 @@ export class ProyectoComponent implements OnInit {
   }
 
   verificarRol(): void {
-    const usuarioId = this.authService.getUsuarioId();
-    this.esAdministrador = usuarioId === 'administrador'; // Ejemplo de verificación
+    this.esAdministrador = this.authService.hasRole('administrador');
   }
 
   crearProyecto(): void {
-    const { nombre, fechaFin } = this.proyectoNuevo;
+    const { nombre, fecha_fin } = this.proyectoNuevo;
 
     if (!nombre?.trim()) {
       alert('El nombre del proyecto es obligatorio.');
@@ -83,7 +82,7 @@ export class ProyectoComponent implements OnInit {
 
     const proyecto: Partial<Proyecto> = {
       ...this.proyectoNuevo,
-      fechaFin: fechaFin ? new Date(fechaFin).toISOString().split('T')[0] : null,
+      fecha_fin: fecha_fin ? new Date(fecha_fin).toISOString().split('T')[0] : null,
     };
 
     this.proyectoService.crearProyecto(proyecto).subscribe({
@@ -91,7 +90,7 @@ export class ProyectoComponent implements OnInit {
         this.proyectos.push(nuevo);
         this.proyectoNuevo = this.resetProyecto();
         alert('Proyecto creado.');
-        this.cerrarModal(); // cerrar modal al crear exitosamente
+        this.cerrarModal();
       },
       error: (err) => alert(err.message),
     });
@@ -111,7 +110,7 @@ export class ProyectoComponent implements OnInit {
   }
 
   editarProyecto(proyecto: Proyecto): void {
-    const { nombre, fechaFin } = proyecto;
+    const { nombre, fecha_fin } = proyecto;
 
     if (!nombre?.trim()) {
       alert('El nombre del proyecto es obligatorio.');
@@ -120,7 +119,7 @@ export class ProyectoComponent implements OnInit {
 
     const proyectoActualizado: Partial<Proyecto> = {
       ...proyecto,
-      fechaFin: fechaFin ? new Date(fechaFin).toISOString().split('T')[0] : null,
+      fecha_fin: fecha_fin ? new Date(fecha_fin).toISOString().split('T')[0] : null,
     };
 
     this.proyectoService.actualizarProyecto(proyecto.id, proyectoActualizado).subscribe({
@@ -153,7 +152,7 @@ export class ProyectoComponent implements OnInit {
   }
 
   private resetProyecto(): Partial<Proyecto> {
-    return { nombre: '', descripcion: '', progreso: 0, fechaInicio: '', fechaFin: '' };
+    return { nombre: '', descripcion: '', progreso: 0, fecha_creacion: '', fecha_fin: '' };
   }
 
   abrirModal(): void {

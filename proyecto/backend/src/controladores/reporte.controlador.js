@@ -1,46 +1,40 @@
+const { Sequelize, Op } = require('sequelize');
 const Usuarios = require('../modelos/usuario.modelo');
 const Proyecto = require('../modelos/proyecto.modelo');
 const Tarea = require('../modelos/tarea.modelo');
 const Participante = require('../modelos/participante.modelo');
 const UsuarioRol = require('../modelos/rol_usuario.modelo');
 const Rol = require('../modelos/rol.modelo');
-const { Sequelize } = require('sequelize');
 
 // GET /api/reportes/dashboard
 exports.dashboard = async (req, res) => {
   try {
-    // Total de usuarios
     const totalUsuarios = await Usuarios.count();
 
-    // Proyectos por estado
     const proyectosPorEstado = await Proyecto.findAll({
       attributes: ['estado', [Sequelize.fn('COUNT', Sequelize.col('estado')), 'cantidad']],
       group: ['estado']
     });
 
-    // Progreso promedio de proyectos
     const progresoPromedio = await Proyecto.findAll({
       attributes: [[Sequelize.fn('AVG', Sequelize.col('progreso')), 'promedio']]
     });
 
-    // Total de tareas por estado
     const tareasPorEstado = await Tarea.findAll({
       attributes: ['estado', [Sequelize.fn('COUNT', Sequelize.col('estado')), 'cantidad']],
       group: ['estado']
     });
 
-    // Total de participaciones por usuario
     const participaciones = await Participante.findAll({
       attributes: ['usuario_id', [Sequelize.fn('COUNT', Sequelize.col('tarea_id')), 'tareas']],
       group: ['usuario_id']
     });
 
-    // Usuarios por rol
     const usuariosPorRol = await UsuarioRol.findAll({
       attributes: ['rol_id', [Sequelize.fn('COUNT', Sequelize.col('usuario_id')), 'usuarios']],
       include: [{
         model: Rol,
-        as: 'rol', // ✅ alias correcto
+        as: 'rol',
         attributes: ['nombre']
       }],
       group: ['rol_id', 'rol.id']
@@ -49,7 +43,7 @@ exports.dashboard = async (req, res) => {
     res.json({
       totalUsuarios,
       proyectosPorEstado,
-      progresoPromedio: parseFloat(progresoPromedio[0].dataValues.promedio || 0).toFixed(2),
+      progresoPromedio: parseFloat(progresoPromedio[0]?.dataValues.promedio || 0).toFixed(2),
       tareasPorEstado,
       participaciones,
       usuariosPorRol
@@ -80,16 +74,23 @@ exports.usuariosPorEstado = async (req, res) => {
 exports.proyectosPorFecha = async (req, res) => {
   const { startDate, endDate } = req.query;
 
+  if (!startDate || !endDate) {
+    return res.status(400).json({ error: 'Debe proporcionar startDate y endDate en el query.' });
+  }
+
   try {
     const proyectosPorFecha = await Proyecto.findAll({
       where: {
         fecha_creacion: {
-          [Sequelize.Op.between]: [startDate, endDate]
+          [Op.between]: [startDate, endDate]
         }
       },
-      attributes: ['fecha_creacion', [Sequelize.fn('COUNT', Sequelize.col('id')), 'cantidad']],
-      group: [Sequelize.fn('DATE', Sequelize.col('fecha_creacion'))],
-      order: [[Sequelize.col('fecha_creacion'), 'ASC']]
+      attributes: [
+        [Sequelize.fn('DATE_TRUNC', 'day', Sequelize.col('fecha_creacion')), 'fecha'],
+        [Sequelize.fn('COUNT', Sequelize.col('id')), 'cantidad']
+      ],
+      group: [Sequelize.fn('DATE_TRUNC', 'day', Sequelize.col('fecha_creacion'))],
+      order: [[Sequelize.fn('DATE_TRUNC', 'day', Sequelize.col('fecha_creacion')), 'ASC']]
     });
 
     res.json(proyectosPorFecha);
@@ -106,25 +107,42 @@ exports.tareasPorProyecto = async (req, res) => {
       attributes: [
         'proyecto_id',
         [Sequelize.fn('COUNT', Sequelize.col('id')), 'cantidad'],
-        [Sequelize.fn('AVG', Sequelize.col('estado')), 'promedio_completado']
+        [
+          Sequelize.fn('AVG', Sequelize.literal(
+            `CASE WHEN "Tarea"."estado" = 'finalizado' THEN 1 ELSE 0 END`
+          )), 
+          'promedio_completado'
+        ]
       ],
-      group: ['proyecto_id']
+      group: ['Tarea.proyecto_id'],
     });
 
-    res.json(tareasPorProyecto);
+    // Convertir promedio a porcentaje y redondear a 2 decimales
+    const result = tareasPorProyecto.map(tarea => {
+      // Convertir a número, multiplicar por 100 y redondear
+      const promedio = parseFloat(tarea.promedio_completado) * 100;
+      tarea.promedio_completado = promedio.toFixed(2); // Redondear a 2 decimales
+      return tarea;
+    });
+
+    res.json(result);
   } catch (error) {
     console.error('Error en tareas por proyecto:', error);
     res.status(500).json({ error: 'Error al generar reporte de tareas por proyecto.' });
   }
 };
 
+
 // GET /api/reportes/usuarios-con-mas-tareas
 exports.usuariosConMasTareas = async (req, res) => {
   try {
     const usuariosConMasTareas = await Participante.findAll({
-      attributes: ['usuario_id', [Sequelize.fn('COUNT', Sequelize.col('tarea_id')), 'cantidad']],
+      attributes: [
+        'usuario_id', 
+        [Sequelize.fn('COUNT', Sequelize.col('tarea_id')), 'cantidad']
+      ],
       group: ['usuario_id'],
-      order: [[Sequelize.fn('COUNT', Sequelize.col('tarea_id')), 'DESC']],
+      order: [[Sequelize.literal('cantidad'), 'DESC']],
       limit: 10
     });
 
@@ -141,9 +159,9 @@ exports.proyectosCercaFechaFin = async (req, res) => {
     const proyectosCercaFin = await Proyecto.findAll({
       where: {
         fecha_fin: {
-          [Sequelize.Op.between]: [
-            Sequelize.literal('CURDATE()'),
-            Sequelize.literal('DATE_ADD(CURDATE(), INTERVAL 7 DAY)')
+          [Op.between]: [
+            Sequelize.literal("CURRENT_DATE"),
+            Sequelize.literal("CURRENT_DATE + INTERVAL '7 days'")
           ]
         }
       },
@@ -162,15 +180,15 @@ exports.promedioTiempoEjecucion = async (req, res) => {
   try {
     const tareas = await Tarea.findAll({
       where: {
-        fecha_inicio: { [Sequelize.Op.ne]: null },
-        fecha_fin: { [Sequelize.Op.ne]: null }
+        fecha_inicio: { [Op.ne]: null },
+        fecha_fin: { [Op.ne]: null }
       },
       attributes: [
-        [Sequelize.fn('TIMESTAMPDIFF', Sequelize.literal('DAY'), Sequelize.col('fecha_inicio'), Sequelize.col('fecha_fin')), 'dias_ejecucion']
+        [Sequelize.literal("EXTRACT(DAY FROM fecha_fin - fecha_inicio)"), 'dias_ejecucion']
       ]
     });
 
-    const totalDias = tareas.reduce((acc, tarea) => acc + parseFloat(tarea.dataValues.dias_ejecucion), 0);
+    const totalDias = tareas.reduce((acc, tarea) => acc + parseFloat(tarea.dataValues.dias_ejecucion || 0), 0);
     const promedio = tareas.length ? totalDias / tareas.length : 0;
 
     res.json({ promedio: promedio.toFixed(2) });

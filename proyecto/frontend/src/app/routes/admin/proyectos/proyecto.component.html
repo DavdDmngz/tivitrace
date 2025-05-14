@@ -29,7 +29,7 @@
       <div class="card-body">
         <h5 class="card-title">{{ proyecto.nombre }}</h5>
         <p class="card-text">Estado:
-          <span class="badge bg-warning">En progreso</span>
+          <span class="badge bg-warning">en_proceso</span>
         </p>
         <div class="progress mb-2">
           <div class="progress-bar" [style.width.%]="proyecto.progreso || 0">
@@ -59,8 +59,8 @@
           Estado: <span class="badge bg-success">Finalizado</span>
         </p>
         <p class="card-text text-muted">
-          {{ proyecto.fechaInicio || 'Sin fecha inicio' }} - 
-          {{ proyecto.fechaFin || 'Sin fecha fin' }}
+          {{ proyecto.fecha_creacion || 'Sin fecha inicio' }} - 
+          {{ proyecto.fecha_fin || 'Sin fecha fin' }}
         </p>
       </div>
     </div>
@@ -89,7 +89,7 @@
 
           <div class="mb-3">
             <label for="fechaFin" class="form-label">Fecha de finalización (opcional)</label>
-            <input id="fechaFin" [(ngModel)]="proyectoNuevo.fechaFin" name="fechaFin" type="date" class="form-control" />
+            <input id="fechaFin" [(ngModel)]="proyectoNuevo.fecha_fin" name="fechaFin" type="date" class="form-control" />
           </div>
         </div>
         <div class="modal-footer">

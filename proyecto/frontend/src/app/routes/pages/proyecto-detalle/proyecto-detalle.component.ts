@@ -1,6 +1,4 @@
-import {
-  Component, OnInit, ViewChild, ElementRef, ChangeDetectorRef
-} from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
@@ -9,11 +7,13 @@ import { HttpClient } from '@angular/common/http';
 import { ProyectoService, Proyecto } from '../../../services/proyecto.service';
 import { AuthService } from '../../../services/auth.service';
 
+type EstadoTarea = 'sin_comenzar' | 'en_proceso' | 'pendiente' | 'finalizado';
+
 interface Tarea {
   id?: number;
   nombre: string;
   descripcion?: string;
-  estado: 'pendiente' | 'en progreso' | 'finalizado';
+  estado: EstadoTarea;
   proyecto_id: number;
 }
 
@@ -29,8 +29,8 @@ export class DetalleProyectoComponent implements OnInit {
   tareas: Tarea[] = [];
   noTareas: boolean = false;
 
-  participantes: string[] = [];
-  nuevoParticipante: string = '';
+  estadosTarea: EstadoTarea[] = ['sin_comenzar', 'en_proceso', 'pendiente', 'finalizado'];
+
   tareaEnEdicion: Tarea | null = null;
   tareaNombreOriginal: string | null = null;
   editingField: keyof Proyecto | null = null;
@@ -50,30 +50,28 @@ export class DetalleProyectoComponent implements OnInit {
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
+
     if (!idParam || isNaN(+idParam)) {
       console.error('ID de proyecto inválido');
       this.router.navigate(['/proyectos']);
       return;
     }
-  
+
     this.proyectoId = +idParam;
-  
+    this.cargarProyectoYProgreso();
+    this.cargarTareas();
+  }
+
+  cargarProyectoYProgreso(): void {
     this.proyectoService.obtenerProyectoPorId(this.proyectoId).subscribe({
       next: (proyecto) => {
         this.proyecto = proyecto;
-        this.cargarTareas(); // se asegura que this.proyecto ya esté definido
+        console.log('Progreso desde backend:', this.proyecto.progreso);
       },
       error: (err) => {
         console.error('Error al cargar el proyecto:', err);
         this.router.navigate(['/proyectos']);
       },
-    });
-  }  
-
-  cargarProyecto(): void {
-    this.proyectoService.obtenerProyectoPorId(this.proyectoId).subscribe({
-      next: (proyecto) => this.proyecto = proyecto,
-      error: (err) => console.error('Error al cargar el proyecto:', err),
     });
   }
 
@@ -84,16 +82,16 @@ export class DetalleProyectoComponent implements OnInit {
       next: (data) => {
         this.tareas = data;
         this.noTareas = this.tareas.length === 0;
-        this.actualizarProgreso();
       },
       error: (err) => {
         console.error('Error al cargar tareas:', err);
+        this.tareas = [];
         this.noTareas = true;
       },
     });
   }
 
-  tareasPorEstado(estado: Tarea['estado']): Tarea[] {
+  tareasPorEstado(estado: EstadoTarea): Tarea[] {
     return this.tareas.filter(t => t.estado === estado);
   }
 
@@ -102,7 +100,7 @@ export class DetalleProyectoComponent implements OnInit {
 
     const nueva: Tarea = {
       nombre: '',
-      estado: 'pendiente',
+      estado: 'sin_comenzar',
       proyecto_id: this.proyectoId
     };
 
@@ -111,8 +109,8 @@ export class DetalleProyectoComponent implements OnInit {
     this.tareaEnEdicion = nueva;
 
     this.cdr.detectChanges();
-    requestAnimationFrame(() => {
-      this.nombreTareaInput?.nativeElement.focus();
+    setTimeout(() => {
+      this.nombreTareaInput?.nativeElement?.focus();
     });
   }
 
@@ -136,6 +134,7 @@ export class DetalleProyectoComponent implements OnInit {
     request$.subscribe({
       next: () => {
         this.cargarTareas();
+        this.cargarProyectoYProgreso();
         this.tareaEnEdicion = null;
       },
       error: (err) => {
@@ -161,15 +160,29 @@ export class DetalleProyectoComponent implements OnInit {
     if (campo === 'progreso') return;
 
     this.editingField = campo;
-    this.nuevoValor = String(this.proyecto[campo] || '');
+
+    if (campo === 'fecha_creacion' || campo === 'fecha_fin') {
+      const fecha = this.proyecto[campo];
+      this.nuevoValor = fecha ? String(fecha).substring(0, 10) : '';
+    } else {
+      this.nuevoValor = String(this.proyecto[campo] || '');
+    }
+
     this.valorOriginal = this.nuevoValor;
   }
 
   guardarEdicion(): void {
     if (!this.nuevoValor.trim() || !this.editingField || this.editingField === 'progreso') return;
 
-    if (this.proyecto.hasOwnProperty(this.editingField)) {
-      (this.proyecto[this.editingField] as any) = this.nuevoValor;
+    const campo = this.editingField;
+
+    if ((campo === 'fecha_creacion' || campo === 'fecha_fin') && !/^\d{4}-\d{2}-\d{2}$/.test(this.nuevoValor)) {
+      alert('La fecha debe estar en formato YYYY-MM-DD');
+      return;
+    }
+
+    if (this.proyecto.hasOwnProperty(campo)) {
+      (this.proyecto[campo] as any) = this.nuevoValor;
     }
 
     this.proyectoService.actualizarProyecto(this.proyectoId, this.proyecto).subscribe({
@@ -196,18 +209,6 @@ export class DetalleProyectoComponent implements OnInit {
     }
   }
 
-  agregarParticipante(): void {
-    const nombre = this.nuevoParticipante.trim();
-    if (!nombre) return;
-
-    this.participantes.push(nombre);
-    this.nuevoParticipante = '';
-  }
-
-  eliminarParticipante(nombre: string): void {
-    this.participantes = this.participantes.filter(p => p !== nombre);
-  }
-
   dragOver(event: DragEvent): void {
     event.preventDefault();
   }
@@ -227,7 +228,7 @@ export class DetalleProyectoComponent implements OnInit {
     event.preventDefault();
   }
 
-  drop(event: DragEvent, nuevoEstado: Tarea['estado']): void {
+  drop(event: DragEvent, nuevoEstado: EstadoTarea): void {
     event.preventDefault();
     const data = event.dataTransfer?.getData('application/json');
     if (!data) return;
@@ -242,6 +243,7 @@ export class DetalleProyectoComponent implements OnInit {
     this.http.patch(`http://localhost:3003/api/tareas/${tarea.id}/estado`, { estado: nuevoEstado }).subscribe({
       next: () => {
         this.cargarTareas();
+        this.cargarProyectoYProgreso();
       },
       error: (err) => {
         console.error('Error al cambiar el estado de la tarea:', err);
@@ -249,27 +251,6 @@ export class DetalleProyectoComponent implements OnInit {
       }
     });
   }
-
-  actualizarProgreso(): void {
-    if (!this.proyecto) {
-      console.warn('Proyecto no cargado aún. No se puede actualizar el progreso.');
-      return;
-    }
-  
-    const total = this.tareas.length;
-    if (total === 0) {
-      this.proyecto.progreso = 0;
-    } else {
-      const finalizadas = this.tareas.filter(t => t.estado === 'finalizado').length;
-      const porcentaje = Math.round((finalizadas / total) * 100);
-      this.proyecto.progreso = porcentaje;
-    }
-  
-    this.proyectoService.actualizarProyecto(this.proyectoId, this.proyecto).subscribe({
-      next: () => {},
-      error: (err) => console.error('Error al actualizar progreso del proyecto:', err),
-    });
-  }  
 
   trackById(index: number, tarea: Tarea): number {
     return tarea.id || index;
@@ -280,11 +261,11 @@ export class DetalleProyectoComponent implements OnInit {
 
     if (!nombreActual) {
       this.tareas = this.tareas.filter(t => t !== tarea);
-      this.noTareas = this.tareas.length === 0;
     } else if (nombreActual !== this.tareaNombreOriginal) {
       this.guardarTareaInline(tarea);
     }
 
+    this.noTareas = this.tareas.length === 0;
     this.tareaEnEdicion = null;
     this.tareaNombreOriginal = null;
   }
@@ -296,6 +277,34 @@ export class DetalleProyectoComponent implements OnInit {
   }
 
   get progresoPorcentaje(): number {
-    return Math.min(Math.max(+(this.proyecto?.progreso ?? 0), 0), 100);
+    return Math.min(Math.max(+((this.proyecto?.progreso) ?? 0), 0), 100);
+  }
+
+  ngAfterViewInit() {
+    import('bootstrap').then(({ Tooltip }) => {
+      const tooltipTriggerList = Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      tooltipTriggerList.forEach(tooltipTriggerEl => {
+        new Tooltip(tooltipTriggerEl);
+      });
+    }).catch(err => console.error('Error loading Bootstrap Tooltip:', err));
+  }
+
+  editarProyecto(): void {
+    this.router.navigate([`/editar-proyecto/${this.proyectoId}`]);
+  }
+
+  finalizarProyecto(): void {
+    if (confirm('¿Estás seguro de que deseas finalizar este proyecto?')) {
+      this.proyectoService.finalizarProyecto(this.proyectoId).subscribe({
+        next: (): void => {
+          alert('Proyecto finalizado');
+          this.router.navigate(['/proyectos']);
+        },
+        error: (err: any): void => {
+          console.error('Error al finalizar el proyecto:', err);
+          alert('Hubo un error al finalizar el proyecto');
+        }
+      });
+    }
   }
 }

@@ -35,6 +35,7 @@ router.get(
     '/proyectos-por-fecha',
     [
         validarAutenticacion,
+        validarRol(['administrador', 'supervisor']),
         query('startDate')
             .notEmpty().withMessage('La fecha de inicio es obligatoria')
             .isISO8601().withMessage('La fecha de inicio debe ser una fecha válida (ISO8601)'),

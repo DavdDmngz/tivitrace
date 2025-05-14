@@ -20,7 +20,6 @@ const validarCampos = (req, res, next) => {
 router.get(
     '/',
     validarAutenticacion,
-    validarRol(['administrador', 'supervisor']),
     tareaControlador.obtenerTareas
 );
 
@@ -28,7 +27,6 @@ router.get(
 router.get(
     '/:id',
     validarAutenticacion,
-    validarRol(['administrador', 'supervisor']),
     [
         param('id')
             .notEmpty().withMessage('El ID es obligatorio')
@@ -55,7 +53,7 @@ router.post(
             .isString().withMessage('El estado debe ser una cadena de texto')
             .custom((value) => {
                 const estado = value.trim().toLowerCase();
-                if (!['pendiente', 'en progreso', 'finalizado'].includes(estado)) {
+                if (!['sin_comenzar', 'en_proceso', 'pendiente', 'finalizado'].includes(estado)) {
                     throw new Error('Estado inválido');
                 }
                 return true;
@@ -72,7 +70,6 @@ router.post(
 router.put(
     '/:id',
     validarAutenticacion,
-    validarRol(['administrador', 'supervisor']),
     [
         param('id')
             .notEmpty().withMessage('El ID es obligatorio')
@@ -88,7 +85,7 @@ router.put(
             .isString().withMessage('El estado debe ser una cadena de texto')
             .custom((value) => {
                 const estado = value.trim().toLowerCase();
-                if (!['pendiente', 'en progreso', 'finalizado'].includes(estado)) {
+                if (!['sin_comenzar', 'en_proceso', 'pendiente', 'finalizado'].includes(estado)) {
                     throw new Error('Estado inválido');
                 }
                 return true;
@@ -115,60 +112,10 @@ router.delete(
     tareaControlador.eliminarTarea
 );
 
-// Subir un adjunto a una tarea
-router.post(
-    '/:id/adjuntos',
-    validarAutenticacion,
-    validarRol(['administrador', 'supervisor', 'usuario']),
-    upload.single('archivo'),
-    [
-        param('id')
-            .notEmpty().withMessage('El ID de la tarea es obligatorio')
-            .isInt({ min: 1 }).withMessage('El ID debe ser un número entero positivo')
-    ],
-    validarCampos,
-    tareaControlador.subirAdjunto
-);
-
-// Editar un adjunto
-router.put(
-    '/:tareaId/adjuntos/:archivoId',
-    validarAutenticacion,
-    validarRol(['administrador', 'supervisor', 'usuario']),
-    upload.single('archivo'),
-    [
-        param('tareaId')
-            .notEmpty().withMessage('El ID de la tarea es obligatorio')
-            .isInt({ min: 1 }).withMessage('Debe ser un número entero positivo'),
-        param('archivoId')
-            .notEmpty().withMessage('El ID del archivo es obligatorio')
-            .isInt({ min: 1 }).withMessage('Debe ser un número entero positivo')
-    ],
-    validarCampos,
-    adjuntoControlador.editarArchivo
-);
-
-// Eliminar un adjunto
-router.delete(
-    '/:tareaId/adjuntos/:archivoId',
-    validarAutenticacion,
-    validarRol(['administrador', 'supervisor']),
-    [
-        param('tareaId')
-            .notEmpty().withMessage('El ID de la tarea es obligatorio')
-            .isInt({ min: 1 }).withMessage('Debe ser un número entero positivo'),
-        param('archivoId')
-            .notEmpty().withMessage('El ID del archivo es obligatorio')
-            .isInt({ min: 1 }).withMessage('Debe ser un número entero positivo')
-    ],
-    validarCampos,
-    adjuntoControlador.eliminarArchivo
-);
 // Cambiar solo el estado de una tarea (Drag and Drop)
 router.patch(
     '/:id/estado',
     validarAutenticacion,
-    validarRol(['administrador', 'supervisor']),
     [
         param('id')
             .notEmpty().withMessage('El ID es obligatorio')
@@ -178,7 +125,7 @@ router.patch(
             .isString().withMessage('El estado debe ser una cadena de texto')
             .custom((value) => {
                 const estado = value.trim().toLowerCase();
-                if (!['pendiente', 'en progreso', 'finalizado'].includes(estado)) {
+                if (!['sin_comenzar', 'en_proceso', 'pendiente', 'finalizado'].includes(estado)) {
                     throw new Error('Estado inválido');
                 }
                 return true;
@@ -187,4 +134,67 @@ router.patch(
     validarCampos,
     tareaControlador.cambiarEstadoTarea
 );
+
+// Adjuntos
+
+// Subir adjuntos a una tarea (varios archivos)
+router.post(
+    '/:id/adjuntos',
+    validarAutenticacion,
+    upload.array('file'),
+    [
+        param('id')
+            .notEmpty().withMessage('El ID de la tarea es obligatorio')
+            .isInt({ min: 1 }).withMessage('El ID debe ser un número entero positivo')
+    ],
+    validarCampos,
+    adjuntoControlador.subirAdjunto
+);
+
+// Obtener adjuntos de una tarea
+router.get(
+    '/:id/adjuntos',
+    validarAutenticacion,
+    [
+        param('id')
+            .notEmpty().withMessage('El ID de la tarea es obligatorio')
+            .isInt({ min: 1 }).withMessage('Debe ser un número entero positivo')
+    ],
+    validarCampos,
+    adjuntoControlador.obtenerAdjuntosPorTarea
+);
+
+// Editar un adjunto
+router.put(
+    '/:tareaId/adjuntos/:archivoId',
+    validarAutenticacion,
+    upload.single('file'),
+    [
+        param('tareaId')
+            .notEmpty().withMessage('El ID de la tarea es obligatorio')
+            .isInt({ min: 1 }).withMessage('Debe ser un número entero positivo'),
+        param('archivoId')
+            .notEmpty().withMessage('El ID del archivo es obligatorio')
+            .isInt({ min: 1 }).withMessage('Debe ser un número entero positivo')
+    ],
+    validarCampos,
+    adjuntoControlador.editarAdjunto
+);
+
+// Eliminar un adjunto
+router.delete(
+    '/:tareaId/adjuntos/:archivoId',
+    validarAutenticacion,
+    [
+        param('tareaId')
+            .notEmpty().withMessage('El ID de la tarea es obligatorio')
+            .isInt({ min: 1 }).withMessage('Debe ser un número entero positivo'),
+        param('archivoId')
+            .notEmpty().withMessage('El ID del archivo es obligatorio')
+            .isInt({ min: 1 }).withMessage('Debe ser un número entero positivo')
+    ],
+    validarCampos,
+    adjuntoControlador.eliminarAdjunto
+);
+
 module.exports = router;

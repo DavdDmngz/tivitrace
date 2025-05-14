@@ -1,17 +1,20 @@
 import {
   Component, OnInit
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { AuthService } from '../../../services/auth.service';
 
 interface Tarea {
   id: number;
   nombre: string;
   descripcion?: string;
-  estado: 'pendiente' | 'en progreso' | 'finalizado';
+  estado: 'sin_comenzar' | 'en_proceso' | 'pendiente' | 'finalizado';
+  adjuntos?: { id: number; nombre_archivo: string; url: string }[];
   proyecto_id: number;
+  fecha_fin: Date;
 }
 
 interface Usuario {
@@ -44,16 +47,20 @@ export class DetalleTareaComponent implements OnInit {
 
   usuariosFiltrados: Usuario[] = [];
   usuarioSeleccionado?: Usuario;
+  esAdministrador: boolean = false;
 
-  estados: Tarea['estado'][] = ['pendiente', 'en progreso', 'finalizado'];
+  estados: Tarea['estado'][] = ['sin_comenzar', 'en_proceso', 'pendiente', 'finalizado'];
 
   constructor(
+    private location: Location,
+    private authservice: AuthService,
     private route: ActivatedRoute,
     private http: HttpClient,
     private router: Router
   ) {}
 
   ngOnInit(): void {
+    this.verificarRol();
     const idParam = this.route.snapshot.paramMap.get('id');
     if (!idParam || isNaN(+idParam)) {
       console.error('ID de tarea inválido');
@@ -62,20 +69,25 @@ export class DetalleTareaComponent implements OnInit {
     }
 
     this.tareaId = +idParam;
-    this.cargarTarea();
+
+    this.http.get<Tarea>(`http://localhost:3003/api/tareas/${this.tareaId}`).subscribe({
+      next: (tarea) => {
+        this.tarea = tarea;
+        this.cargarParticipantes();
+        this.cargarAdjuntos();
+      },
+      error: (error) => {
+        console.error('Error al cargar la tarea', error);
+      }
+    });
   }
 
-  cargarTarea(): void {
-    this.http.get<Tarea>(`http://localhost:3003/api/tareas/${this.tareaId}`).subscribe({
-      next: (data) => {
-        this.tarea = data;
-        this.cargarParticipantes();
-      },
-      error: (err) => {
-        console.error('Error al cargar la tarea:', err);
-        this.router.navigate(['/proyectos']);
-      },
-    });
+  volver() {
+    this.location.back();
+  }
+
+  verificarRol(): void {
+    this.esAdministrador = this.authservice.hasRole('administrador');
   }
 
   cargarParticipantes(): void {
@@ -85,6 +97,18 @@ export class DetalleTareaComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al cargar participantes:', err);
+      }
+    });
+  }
+
+  cargarAdjuntos(): void {
+    this.http.get<Tarea['adjuntos']>(`http://localhost:3003/api/tareas/${this.tareaId}/adjuntos`).subscribe({
+      next: (adjuntos) => {
+        this.tarea.adjuntos = adjuntos ?? [];
+      },
+      error: (err) => {
+        console.error('Error al cargar adjuntos:', err);
+        this.tarea.adjuntos = [];
       }
     });
   }
@@ -128,10 +152,9 @@ export class DetalleTareaComponent implements OnInit {
     this.http.post(`http://localhost:3003/api/participantes`, payload).subscribe({
       next: () => {
         alert('Participante agregado exitosamente');
-        // Crear el nuevo participante
         const nuevoParticipante: Participante = {
           id: this.usuarioSeleccionado?.id ?? 0,
-          usuario: this.usuarioSeleccionado!, // Aquí se pasa el objeto completo
+          usuario: this.usuarioSeleccionado!,
           proyecto_id: this.tarea.proyecto_id,
           tarea_id: this.tarea.id
         };
@@ -144,9 +167,19 @@ export class DetalleTareaComponent implements OnInit {
   }
 
   eliminarParticipante(participante: Participante): void {
-    this.participantes = this.participantes.filter(p => p.id !== participante.id);
-    // Aquí puedes agregar una petición DELETE si tu backend lo permite
-    // this.http.delete(`http://localhost:3003/api/participantes/${participante.id}`).subscribe(...);
+    const confirmar = confirm(`¿Estás seguro de eliminar al participante ${participante.usuario.nombre} ${participante.usuario.apellido}?`);
+    if (!confirmar) return;
+
+    this.http.delete(`http://localhost:3003/api/participantes/${participante.id}`).subscribe({
+      next: () => {
+        this.participantes = this.participantes.filter(p => p.id !== participante.id);
+        alert('Participante eliminado exitosamente.');
+      },
+      error: (err) => {
+        console.error('Error al eliminar participante:', err);
+        alert('No se pudo eliminar el participante.');
+      }
+    });
   }
 
   onArchivoSeleccionado(event: Event): void {
@@ -160,15 +193,62 @@ export class DetalleTareaComponent implements OnInit {
     this.archivosAdjuntos.splice(index, 1);
   }
 
-  confirmarFinalizar(): void {
-    const confirmado = confirm('¿Estás seguro de finalizar la tarea? Esta acción no se puede revertir.');
-    if (confirmado) {
-      this.finalizarTarea();
+  subirAdjuntos(): void {
+    if (this.archivosAdjuntos.length === 0) {
+      alert('No hay archivos seleccionados para subir.');
+      return;
     }
+
+    const formData = new FormData();
+    this.archivosAdjuntos.forEach((archivo) => {
+      formData.append('file', archivo);
+    });
+
+    this.http.post(`http://localhost:3003/api/tareas/${this.tareaId}/adjuntos`, formData).subscribe({
+      next: () => {
+        alert('Archivo(s) subido(s) correctamente.');
+        this.archivosAdjuntos = [];
+        this.cargarAdjuntos();
+      },
+      error: (err) => {
+        console.error('Error al subir archivos:', err);
+        alert('Error al subir archivos.');
+      }
+    });
   }
 
   finalizarTarea(): void {
+    if (this.tarea.estado === 'finalizado') {
+      alert('La tarea ya está finalizada.');
+      return;
+    }
+  
+    const estadoAnterior = this.tarea.estado;
     this.tarea.estado = 'finalizado';
+  
+    this.http.patch(`http://localhost:3003/api/tareas/${this.tarea.id}/estado`, { estado: 'finalizado' }).subscribe({
+      next: (respuesta: any) => {
+        if (respuesta?.tarea?.estado === 'finalizado') {
+          alert('Tarea finalizada correctamente.');
+        } else {
+          alert('No se pudo finalizar la tarea.');
+          this.tarea.estado = estadoAnterior;
+        }
+      },
+      error: (err) => {
+        console.error('Error al finalizar la tarea:', err);
+        this.tarea.estado = estadoAnterior;
+        alert('Error al finalizar la tarea.');
+      }
+    });
+  }
+  
+  enviarTarea(): void {
+    this.tarea.estado = 'pendiente';
+    this.guardarCambios();
+  }
+  tareaEnProceso(): void {
+    this.tarea.estado = 'en_proceso';
     this.guardarCambios();
   }
 
@@ -183,5 +263,28 @@ export class DetalleTareaComponent implements OnInit {
         error: (err) => console.error('Error al eliminar tarea:', err),
       });
     }
+  }
+
+  eliminarAdjunto(adjunto: { id: number; nombre_archivo: string }, index: number): void {
+    const confirmar = confirm(`¿Deseas eliminar el archivo "${adjunto.nombre_archivo}"?`);
+    if (!confirmar) return;
+
+    this.http.delete(`http://localhost:3003/api/adjuntos/${adjunto.id}`).subscribe({
+      next: () => {
+        this.tarea.adjuntos?.splice(index, 1);
+        alert('Archivo eliminado correctamente.');
+      },
+      error: (err) => {
+        console.error('Error al eliminar adjunto:', err);
+        alert('No se pudo eliminar el archivo.');
+      }
+    });
+  }
+
+  descargarArchivo(adjunto: { url: string; nombre_archivo: string }): void {
+    const a = document.createElement('a');
+    a.href = adjunto.url;
+    a.download = adjunto.nombre_archivo;
+    a.click();
   }
 }

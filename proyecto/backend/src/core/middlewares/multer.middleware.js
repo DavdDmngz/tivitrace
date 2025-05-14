@@ -4,7 +4,7 @@ const path = require('path');
 // Extensiones permitidas
 const EXTENSIONES_PERMITIDAS = [
   '.pdf', '.doc', '.docx', '.xls', '.xlsx',
-  '.png', '.jpg', '.jpeg', '.gif', '.zip', '.rar'
+  '.png', '.jpg', '.jpeg', '.gif', '.zip', '.rar', '.csv', '.txt', '.ppt', '.pptx'
 ];
 
 // Configuración de almacenamiento

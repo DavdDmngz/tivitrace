@@ -55,7 +55,6 @@ router.put(
     '/:id',
     [
         validarAutenticacion,
-        validarRol(['administrador', 'supervisor']),
         param('id')
             .notEmpty().withMessage('El ID es obligatorio')
             .isInt({ min: 1 }).withMessage('El ID debe ser un número entero positivo'),
@@ -67,7 +66,7 @@ router.put(
             .isString().withMessage('La descripción debe ser una cadena de texto'),
         body('estado')
             .optional()
-            .isIn(['en_progreso', 'finalizado']).withMessage('El estado debe ser "en_progreso" o "finalizado"'),
+            .isIn(['en_proceso', 'finalizado']).withMessage('El estado debe ser "en_proceso" o "finalizado"'),
         body('fecha_fin')
             .optional({ nullable: true }) // Permite null o una fecha válida
             .isISO8601().withMessage('La fecha de fin debe tener un formato válido (ISO8601)')

@@ -1,80 +1,210 @@
 <div class="d-flex">
   <!-- Contenido principal -->
   <div class="container-fluid">
-    
-    <!-- Título de la página -->
-    <div class="d-flex justify-content-between align-items-center mb-4" *ngIf="tarea">
+    <!-- Título -->
+    <div *ngIf="tarea" class="d-flex justify-content-between align-items-center mb-4">
       <h1 class="h3 mb-0 text-gray-800">Tarea: {{ tarea.nombre }}</h1>
-      <button class="btn btn-primary" type="button">
+      <button class="btn btn-primary" type="button" (click)="volver()"> 
         <i class="fas fa-arrow-left"></i> Volver
       </button>
     </div>
 
-    <!-- Cargando tarea -->
+    <!-- Cargando -->
     <div *ngIf="!tarea" class="mb-4">
       <p>Cargando tarea...</p>
     </div>
 
-    <!-- Información básica -->
-    <div *ngIf="tarea" class="card shadow-sm mb-3">
+<!-- Vistas de tareas -->
+    <!-- Vista Solo Lectura si tarea está en pendiente o finalizado -->
+    <div *ngIf="tarea?.estado === 'pendiente' || tarea?.estado === 'finalizado'" class="card shadow-sm mb-3">
       <div class="card-body">
-        <form>
-          <div class="form-group mb-3">
-            <label for="nombreTarea">Nombre</label>
-            <input id="nombreTarea" type="text" class="form-control" [(ngModel)]="tarea.nombre" name="nombre" aria-label="Nombre de la tarea">
-          </div>
 
-          <div class="form-group mb-3">
-            <label for="estadoTarea">Estado</label>
-            <select id="estadoTarea" class="form-control" [(ngModel)]="tarea.estado" name="estado" aria-label="Estado de la tarea">
-              <option *ngFor="let estado of estados" [value]="estado">{{ estado }}</option>
-            </select>
+        <!-- Notificación si está finalizada -->
+        <div *ngIf="tarea.estado === 'finalizado'" class="alert alert-success text-center" role="alert">
+          <strong>Tarea finalizada</strong>
+        </div>
+
+        <h5 class="card-title">{{ tarea.nombre }}</h5>
+        <p><strong>Descripción:</strong></p>
+        <p>{{ tarea.descripcion || 'Sin descripción' }}</p>
+
+        <p><strong>Fecha de finalización:</strong></p>
+        <p>{{ tarea.fecha_fin | date: 'longDate' }}</p>
+
+        <p><strong>Subido por:</strong></p>
+        <p>
+          <span *ngIf="participantes.length > 0">
+            {{ participantes[0].usuario.nombre }} {{ participantes[0].usuario.apellido }} ({{ participantes[0].usuario.correo }})
+          </span>
+          <span *ngIf="participantes.length === 0">Sin participante asignado</span>
+        </p>
+
+        <p><strong>Archivos adjuntos:</strong></p>
+        <div *ngIf="(tarea.adjuntos ?? []).length > 0" class="mb-3">
+          <div class="row">
+            <div class="col-md-4" *ngFor="let adjunto of tarea.adjuntos; let i = index">
+              <div class="card mb-3 shadow-sm border-light position-relative adjunto-card h-100">
+                <a [href]="adjunto.url" target="_blank">
+                  <div class="card-body text-center">
+                    <i class="fas fa-file-alt fa-3x text-primary"></i>
+                    <p class="mt-2 mb-0">{{ adjunto.nombre_archivo }}</p>
+                  </div>
+                </a>
+                <div class="position-absolute top-0 end-0 m-2 acciones-adjunto">
+                  <button
+                    class="btn btn-sm btn-outline-primary me-1"
+                    (click)="descargarArchivo(adjunto)"
+                    type="button"
+                  >
+                    <i class="fas fa-download"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    (click)="eliminarAdjunto(adjunto, i)"
+                    type="button"
+                  >
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-        </form>
+        </div>
+        <ng-template #sinAdjuntos>
+          <p class="text-muted">No hay archivos adjuntos.</p>
+        </ng-template>
       </div>
     </div>
 
-    <!-- Descripción + Archivos -->
-    <div *ngIf="tarea" class="card shadow-sm mb-3">
-      <div class="card-body">
-        <div class="form-group mb-3">
-          <label for="descripcionTarea">Descripción</label>
-          <textarea id="descripcionTarea" class="form-control" rows="4" [(ngModel)]="tarea.descripcion" name="descripcion"
-            [placeholder]="!tarea.descripcion ? 'Agrega una descripción' : ''"></textarea>
-        </div>
+    <!-- Vista Editable si tarea NO está en pendiente y NO está finalizado -->
+    <ng-container *ngIf="tarea && tarea.estado !== 'pendiente' && tarea.estado !== 'finalizado'">
+      <!-- Información básica -->
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <form>
+            <div class="form-group mb-3">
+              <label for="nombreTarea">Nombre</label>
+              <input id="nombreTarea" type="text" name="nombre"
+                    class="form-control"
+                    [(ngModel)]="tarea.nombre"
+                    aria-label="Nombre de la tarea">
+            </div>
 
-        <div class="form-group mb-3">
-          <label for="archivosAdjuntos">Archivos Adjuntos</label>
-          <input id="archivosAdjuntos" type="file" (change)="onArchivoSeleccionado($event)" multiple class="form-control">
+            <div class="form-group mb-3">
+              <label for="estadoTarea">Estado</label>
+              <select id="estadoTarea" name="estado"
+                      class="form-control"
+                      [(ngModel)]="tarea.estado"
+                      aria-label="Estado de la tarea">
+                <option *ngFor="let estado of estados" [value]="estado">{{ estado }}</option>
+              </select>
+            </div>
+          </form>
         </div>
+      </div>
 
-        <ul class="list-group">
-          <li *ngFor="let archivo of archivosAdjuntos; let i = index"
-              class="list-group-item d-flex justify-content-between align-items-center">
-            {{ archivo.name }}
-            <button class="btn btn-sm btn-danger" type="button" (click)="eliminarArchivo(i)">
-              <i class="fas fa-times"></i>
+      <!-- Descripción + Archivos -->
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <div class="form-group mb-3">
+            <label for="descripcionTarea">Descripción</label>
+            <textarea id="descripcionTarea" name="descripcion"
+                      class="form-control" rows="4"
+                      [(ngModel)]="tarea.descripcion"
+                      [placeholder]="!tarea.descripcion ? 'Agrega una descripción' : ''">
+            </textarea>
+          </div>
+
+          <!-- Subida de archivos -->
+          <div class="form-group mb-3">
+            <label for="archivosAdjuntos">Archivos Adjuntos</label>
+            <div class="custom-file">
+              <input id="archivosAdjuntos" type="file"
+                    (change)="onArchivoSeleccionado($event)"
+                    multiple
+                    class="custom-file-input">
+              <label class="custom-file-label" for="archivosAdjuntos">
+                Selecciona archivos
+              </label>
+            </div>
+            <button class="btn btn-sm btn-outline-primary mt-3 w-100" type="button" (click)="subirAdjuntos()">
+              <i class="fas fa-upload"></i> Subir adjuntos
             </button>
-          </li>
-        </ul>
-      </div>
-    </div>
+          </div>
 
-    <!-- Participantes -->
-    <div *ngIf="tarea" class="card shadow-sm">
+          <!-- Archivos guardados -->
+          <div *ngIf="(tarea.adjuntos ?? []).length > 0" class="mb-3">
+            <label>Archivos Guardados</label>
+            <div class="row">
+              <div class="col-md-4" *ngFor="let adjunto of tarea.adjuntos; let i = index">
+                <div class="card mb-3 shadow-sm border-light position-relative adjunto-card h-100">
+                  <a [href]="adjunto.url" target="_blank">
+                    <div class="card-body text-center">
+                      <i class="fas fa-file-alt fa-3x text-primary"></i>
+                      <p class="mt-2 mb-0">{{ adjunto.nombre_archivo }}</p>
+                    </div>
+                  </a>
+                  <div class="position-absolute top-0 end-0 m-2 acciones-adjunto">
+                    <button
+                      class="btn btn-sm btn-outline-primary me-1"
+                      (click)="descargarArchivo(adjunto)"
+                      type="button"
+                    >
+                      <i class="fas fa-download"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-danger"
+                      (click)="eliminarAdjunto(adjunto, i)"
+                      type="button"
+                    >
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Archivos seleccionados -->
+          <div *ngIf="archivosAdjuntos.length > 0">
+            <label>Archivos Seleccionados</label>
+            <ul class="list-group mb-2">
+              <li *ngFor="let archivo of archivosAdjuntos; let i = index"
+                  class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                  <div class="rounded bg-light p-2 mr-2" style="width: 30px; height: 30px;">
+                    <i class="fas fa-file-alt fa-lg text-primary"></i>
+                  </div>
+                  <span class="text-truncate" style="max-width: 150px;">{{ archivo.name }}</span>
+                </div>
+                <button type="button" class="btn btn-sm btn-danger" (click)="eliminarArchivo(i)">
+                  <i class="fas fa-times"></i>
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+
+<!-- Participantes (solo si no está pendiente) -->
+  <div *ngIf="tarea?.estado !== 'pendiente'" class="card shadow-sm">
       <div class="card-header py-2">
         <h6 class="m-0 font-weight-bold text-primary">Participantes</h6>
       </div>
       <div class="card-body">
         <ul class="list-group" *ngIf="participantes.length > 0; else noParticipantes">
-          <li *ngFor="let p of participantes" class="list-group-item d-flex justify-content-between align-items-center">
+          <li *ngFor="let p of participantes"
+              class="list-group-item d-flex justify-content-between align-items-center">
             {{ p.usuario.nombre }} {{ p.usuario.apellido }} ({{ p.usuario.correo }})
-            <button class="btn btn-sm btn-danger" type="button" (click)="eliminarParticipante(p)">
+            <button *ngIf="tarea?.estado !== 'pendiente'" type="button"
+                    class="btn btn-sm btn-danger"
+                    (click)="eliminarParticipante(p)">
               <i class="fas fa-user-minus"></i>
             </button>
-          </li>          
+          </li>
         </ul>
-        
         <ng-template #noParticipantes>
           <p class="text-muted">Agrega usuarios.</p>
         </ng-template>
@@ -82,51 +212,133 @@
     </div>
   </div>
 
-  <!-- Sidebar de acciones -->
+<!-- Sidebar acciones -->
   <div class="d-flex flex-column align-items-center bg-light p-2 shadow-sm"
       style="width: 60px; height: calc(100vh - 56px); position: relative; right: 0; top: 56px;">
-    <button class="btn btn-sm btn-outline-success mb-3" (click)="guardarCambios()" title="Guardar" type="button">
-      <i class="fas fa-save"></i>
-    </button>
-    <button class="btn btn-sm btn-outline-primary mb-3" data-toggle="modal" data-target="#agregarParticipanteModal" title="Agregar participante" type="button">
-      <i class="fas fa-user-plus"></i>
-    </button>
-    <button class="btn btn-sm btn-outline-danger mb-3" (click)="eliminarTarea()" title="Eliminar tarea" type="button">
-      <i class="fas fa-trash-alt"></i>
-    </button>
-    <button class="btn btn-sm btn-outline-warning" (click)="confirmarFinalizar()" title="Finalizar tarea" type="button">
-      <i class="fas fa-check-circle"></i>
-    </button>
-  </div>
-</div>
 
-<!-- Modal para agregar participantes -->
-<div class="modal fade" id="agregarParticipanteModal" tabindex="-1" role="dialog" aria-labelledby="agregarParticipanteModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="agregarParticipanteModalLabel">Agregar Participante</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
-          <span aria-hidden="true">&times;</span>
+    <!-- Mostrar si tarea está en estado "sin_comenzar" o "en_proceso" -->
+    <ng-container *ngIf="tarea?.estado === 'sin_comenzar' || tarea?.estado === 'en_proceso'">
+      <button class="btn btn-sm btn-outline-success mb-3" 
+              (click)="guardarCambios()" title="Guardar">
+        <i class="fas fa-save"></i>
+      </button>
+
+      <button class="btn btn-sm btn-outline-primary mb-3"
+              data-toggle="modal" data-target="#agregarParticipanteModal" title="Agregar participante">
+        <i class="fas fa-user-plus"></i>
+      </button>
+
+      <button class="btn btn-sm btn-outline-info mb-3"
+              (click)="enviarTarea()" title="Enviar tarea">
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </ng-container>
+
+    <!-- Mostrar si tarea está en estado "pendiente" -->
+    <ng-container *ngIf="tarea?.estado === 'pendiente'">
+      <!-- Si es administrador -->
+      <ng-container *ngIf="esAdministrador; else usuarioComun">
+        <button class="btn btn-sm btn-outline-success mb-3"
+                data-toggle="modal" data-target="#confirmarFinalizarModal"
+                title="Finalizar tarea">
+          <i class="fas fa-check-circle"></i>
         </button>
-      </div>
-      <div class="modal-body">
-        <input type="text" [(ngModel)]="nuevoParticipante" class="form-control mb-2"
-               (input)="buscarUsuarios()" placeholder="Nombre del participante" aria-label="Buscar usuario">
 
-        <!-- Lista de sugerencias -->
-        <ul class="list-group" *ngIf="usuariosFiltrados.length > 0">
-          <li *ngFor="let usuario of usuariosFiltrados"
-              (click)="seleccionarUsuario(usuario)"
-              class="list-group-item list-group-item-action"
-              style="cursor: pointer;">
-            {{ usuario.nombre }} {{ usuario.apellido }} ({{ usuario.correo }})
-          </li>
-        </ul>
+        <button class="btn btn-sm btn-outline-warning mb-3"
+                (click)="tareaEnProceso()" title="Rechazar tarea">
+          <i class="fas fa-times-circle"></i>
+        </button>
+      </ng-container>
+
+      <!-- Si NO es administrador -->
+      <ng-template #usuarioComun>
+        <button class="btn btn-sm btn-outline-danger mb-3"
+                (click)="tareaEnProceso()" title="Cancelar entrega">
+          <i class="fas fa-ban"></i>
+        </button>
+      </ng-template>
+    </ng-container>
+
+    <!-- Mostrar si tarea está finalizada y es administrador -->
+    <ng-container *ngIf="tarea?.estado === 'finalizado' && esAdministrador">
+      <button class="btn btn-sm btn-outline-danger mb-3"
+              (click)="eliminarTarea()" title="Eliminar tarea">
+        <i class="fas fa-trash-alt"></i>
+      </button>
+
+      <button class="btn btn-sm btn-outline-secondary mb-3"
+              (click)="tareaEnProceso()" title="Recuperar tarea">
+        <i class="fas fa-undo"></i>
+      </button>
+    </ng-container>
+  </div>
+
+  <!-- Modal: Agregar Participante -->
+  <div class="modal fade" id="agregarParticipanteModal" tabindex="-1" role="dialog"
+       aria-labelledby="agregarParticipanteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Agregar Participante</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="text" [(ngModel)]="nuevoParticipante"
+                 class="form-control mb-2"
+                 (input)="buscarUsuarios()"
+                 placeholder="Nombre del participante" aria-label="Buscar usuario">
+          <ul class="list-group" *ngIf="usuariosFiltrados.length > 0">
+            <li *ngFor="let usuario of usuariosFiltrados"
+                (click)="seleccionarUsuario(usuario)"
+                class="list-group-item list-group-item-action"
+                style="cursor: pointer;">
+              {{ usuario.nombre }} {{ usuario.apellido }} ({{ usuario.correo }})
+            </li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+          <button type="button" class="btn btn-primary"
+                  (click)="agregarParticipante()"
+                  [disabled]="!usuarioSeleccionado">
+            Agregar
+          </button>
+        </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
-        <button type="button" class="btn btn-primary" (click)="agregarParticipante()" [disabled]="!usuarioSeleccionado">Agregar</button>
+    </div>
+  </div>
+
+  <!-- Modal: Confirmar Finalizar -->
+  <div class="modal fade" id="confirmarFinalizarModal" tabindex="-1" role="dialog"
+       aria-labelledby="confirmarFinalizarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content border-success">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title">Confirmar finalización</h5>
+          <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>
+            ¿Estás seguro de que deseas finalizar esta tarea?
+            <br />
+            <strong>Una vez finalizada:</strong>
+          </p>
+          <ul>
+            <li>Los usuarios normales no podrán hacer más cambios.</li>
+            <li>Solo un administrador podrá restaurarla o devolverla a estado pendiente.</li>
+          </ul>
+          <p class="text-danger mb-0"><strong>Esta acción es irreversible para usuarios comunes.</strong></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-success" (click)="finalizarTarea()" data-dismiss="modal">
+            Finalizar tarea
+          </button>
+        </div>
       </div>
     </div>
   </div>

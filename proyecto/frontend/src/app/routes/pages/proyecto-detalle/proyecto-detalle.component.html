@@ -65,9 +65,9 @@
 
       <!-- Fechas -->
       <p class="text-muted">
-        <strong>Inicio:</strong> {{ proyecto.fechaInicio || 'No definido' }} <br />
-        <strong>Fin estimada:</strong> {{ proyecto.fechaFin || 'No definida' }}
-      </p>
+        <strong>Inicio:</strong> {{ proyecto.fecha_creacion ? (proyecto.fecha_creacion | date:'dd/MM/yy') : 'No definido' }} <br />
+        <strong>Fin estimada:</strong> {{ proyecto.fecha_fin ? (proyecto.fecha_fin | date:'dd/MM/yy') : 'No definida' }}
+      </p>                 
     </div>
   </div>
 
@@ -82,100 +82,90 @@
     </div>
   </div>
 
-  <!-- Tareas estilo Kanban -->
+  <!-- Tabla dinámica de tareas -->
   <h4 class="mb-3" *ngIf="!noTareas">Tareas del proyecto</h4>
 
-  <!-- Mostrar solo si hay tareas -->
   <div class="row" *ngIf="!noTareas">
-    <!-- Estado: Por hacer -->
-    <div class="col-md-4" (dragover)="dragOver($event)" (drop)="drop($event, 'pendiente')">
-      <h5 class="text-primary">Por hacer</h5>
+    <div class="table-responsive">
+      <table class="table table-bordered">
+        <thead class="table-light text-center">
+          <tr>
+            <th *ngFor="let estado of estadosTarea" class="text-capitalize">
+              {{
+                estado === 'sin_comenzar' ? 'Sin comenzar' :
+                estado === 'en_proceso' ? 'En proceso' :
+                estado === 'pendiente' ? 'Pendiente' :
+                estado === 'finalizado' ? 'Finalizado' :
+                estado
+              }}
+            </th>          
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td
+              *ngFor="let estado of estadosTarea"
+              (dragover)="dragOver($event)"
+              (drop)="drop($event, estado)"
+              class="align-top"
+            >
+              <!-- Lista de tareas por estado -->
+              <ng-container *ngFor="let tarea of tareasPorEstado(estado); trackBy: trackById">
+                <div
+                  class="card mb-2"
+                  [ngClass]="{
+                    'border-success': tarea.estado === 'finalizado',
+                    'border-warning': tarea.estado === 'pendiente'
+                  }"
+                  draggable="true"
+                  (dragstart)="dragStart($event, tarea)"
+                  (click)="irADetalleTarea(tarea)"
+                >
+                  <div class="card-body p-2 d-flex justify-content-between align-items-center">
+                    <div *ngIf="tareaEnEdicion === tarea" class="w-100">
+                      <input
+                        [(ngModel)]="tarea.nombre"
+                        class="form-control"
+                        (blur)="guardarTareaInline(tarea)"
+                        (keyup.enter)="guardarTareaInline(tarea)"
+                      />
+                    </div>
+                    <div *ngIf="tareaEnEdicion !== tarea" class="w-100">
+                      {{ tarea.nombre }}
+                    </div>
 
-      <ng-container *ngFor="let tarea of tareasPorEstado('pendiente'); trackBy: trackById">
-        <div
-          class="card mb-2"
-          draggable="true"
-          (dragstart)="dragStart($event, tarea)"
-          (click)="irADetalleTarea(tarea)"
-        >
-          <div class="card-body p-2">
-            <div *ngIf="tareaEnEdicion === tarea">
-              <input
-                #nombreTareaInput
-                [(ngModel)]="tarea.nombre"
-                placeholder="Escribe un nombre para la tarea"
-                class="form-control"
-                (blur)="deseleccionarTarea(tarea)"
-                (keyup.enter)="guardarTareaInline(tarea)"
-              />
-            </div>
-            <div *ngIf="tareaEnEdicion !== tarea">
-              {{ tarea.nombre }}
-            </div>
-          </div>
-        </div>
-      </ng-container>
+                    <!-- Icono de pendiente -->
+                    <div *ngIf="tarea.estado === 'pendiente'" class="ms-2 text-warning" placement="top">
+                      <i 
+                        class="fas fa-exclamation-triangle"
+                        data-bs-toggle="tooltip"
+                        data-bs-placement="top"
+                        title="La tarea está en espera de ser revisada, aún estás a tiempo de hacer cambios. Una vez finalizada la tarea no puede recuperarse.">
+                      </i>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
 
-      <div
-        *ngIf="tareas.length > 0 && !tareaEnEdicion"
-        class="card mb-2 bg-light text-center text-muted"
-        style="cursor: pointer;"
-        draggable="true"
-        (click)="crearTareaInline()"
-      >
-        <div class="card-body p-2">
-          Nueva tarea
-        </div>
-      </div>
-    </div>
-
-    <!-- Estado: En progreso -->
-    <div class="col-md-4" (dragover)="dragOver($event)" (drop)="drop($event, 'en progreso')">
-      <h5 class="text-warning">En progreso</h5>
-      <ng-container *ngFor="let tarea of tareasPorEstado('en progreso'); trackBy: trackById">
-        <div
-          class="card mb-2"
-          draggable="true"
-          (dragstart)="dragStart($event, tarea)"
-          (click)="irADetalleTarea(tarea)"
-        >
-          <div class="card-body p-2">
-            <div *ngIf="tareaEnEdicion === tarea">
-              <input [(ngModel)]="tarea.nombre" (blur)="guardarTareaInline(tarea)" class="form-control" />
-            </div>
-            <div *ngIf="tareaEnEdicion !== tarea">
-              {{ tarea.nombre }}
-            </div>
-          </div>
-        </div>
-      </ng-container>
-    </div>
-
-    <!-- Estado: Finalizadas -->
-    <div class="col-md-4" (dragover)="dragOver($event)" (drop)="drop($event, 'finalizado')">
-      <h5 class="text-success">Finalizadas</h5>
-      <ng-container *ngFor="let tarea of tareasPorEstado('finalizado'); trackBy: trackById">
-        <div
-          class="card mb-2"
-          draggable="true"
-          (dragstart)="dragStart($event, tarea)"
-          (click)="irADetalleTarea(tarea)"
-        >
-          <div class="card-body p-2">
-            <div *ngIf="tareaEnEdicion === tarea">
-              <input [(ngModel)]="tarea.nombre" (blur)="guardarTareaInline(tarea)" class="form-control" />
-            </div>
-            <div *ngIf="tareaEnEdicion !== tarea">
-              {{ tarea.nombre }}
-            </div>
-          </div>
-        </div>
-      </ng-container>
+              <!-- Botón para crear nueva tarea -->
+              <div
+                *ngIf="estado === 'sin_comenzar' && tareas.length > 0 && !tareaEnEdicion"
+                class="card mb-2 bg-light text-center text-muted"
+                style="cursor: pointer;"
+                (click)="crearTareaInline()"
+                draggable="true"
+              >
+                <div class="card-body p-2">Nueva tarea</div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
-</div>
 
-<!-- Cargando proyecto -->
-<div class="container" *ngIf="!proyecto">
-  <div class="alert alert-info">Cargando proyecto...</div>
+  <!-- Cargando proyecto -->
+  <div class="container" *ngIf="!proyecto">
+    <div class="alert alert-info">Cargando proyecto...</div>
+  </div>
 </div>

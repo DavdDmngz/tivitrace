@@ -35,9 +35,9 @@ const Proyecto = sequelize.define('proyecto', {
     estado: {
         type: DataTypes.STRING,
         allowNull: false,
-        defaultValue: 'en_progreso',
+        defaultValue: 'en_proceso',
         validate: {
-            isIn: [['en_progreso', 'pendiente', 'finalizado', 'cancelado']]
+            isIn: [['en_proceso', 'pendiente', 'finalizado', 'cancelado']]
         }
     }
 }, {

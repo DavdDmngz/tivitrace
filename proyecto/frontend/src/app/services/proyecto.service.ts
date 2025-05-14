@@ -8,8 +8,8 @@ export interface Proyecto {
   nombre: string;
   descripcion?: string;
   progreso?: number;
-  fechaInicio?: string;
-  fechaFin?: string | null;
+  fecha_creacion?: string;
+  fecha_fin?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -78,6 +78,14 @@ export class ProyectoService {
   eliminarProyecto(id: number): Observable<void> {
     const headers = this.getAuthHeaders(); // Obtener los encabezados con JWT
     return this.http.delete<void>(`${this.apiUrl}/${id}`, { headers }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  // Finalizar un proyecto
+  finalizarProyecto(id: number): Observable<Proyecto> {
+    const headers = this.getAuthHeaders(); // Obtener los encabezados con JWT
+    return this.http.put<Proyecto>(`${this.apiUrl}/${id}/finalizar`, {}, { headers }).pipe(
       catchError(this.handleError)
     );
   }

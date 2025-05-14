@@ -1,92 +1,105 @@
-const fs = require('fs');
-const path = require('path');
-const { Tarea } = require('../modelos/tarea.modelo');
 const Adjunto = require('../modelos/adjunto.modelo');
+const Tarea = require('../modelos/tarea.modelo');
 
-// Subir un archivo
-exports.subirArchivo = async (req, res) => {
-  const { id } = req.params;
-  const archivo = req.file;
-
+// Obtener todos los adjuntos de una tarea
+exports.obtenerAdjuntosPorTarea = async (req, res) => {
   try {
-    if (!archivo) return res.status(400).json({ error: 'No se ha subido ningún archivo' });
+    const { id } = req.params;
 
     const tarea = await Tarea.findByPk(id);
-    if (!tarea) return res.status(404).json({ error: 'Tarea no encontrada' });
-
-    const adjunto = await Adjunto.create({
-      tarea_id: id,
-      nombre_archivo: archivo.filename,
-      ruta_archivo: archivo.path,
-      fecha_subida: new Date()
-    });
-
-    res.status(201).json({
-      mensaje: 'Archivo subido correctamente',
-      adjunto
-    });
-  } catch (error) {
-    console.error('Error al subir el archivo:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
-  }
-};
-
-// Editar un archivo
-exports.editarArchivo = async (req, res) => {
-  const { tareaId, archivoId } = req.params;
-  const archivoNuevo = req.file;
-
-  try {
-    if (!archivoNuevo) return res.status(400).json({ error: 'No se ha subido ningún archivo' });
-
-    const tarea = await Tarea.findByPk(tareaId);
-    if (!tarea) return res.status(404).json({ error: 'Tarea no encontrada' });
-
-    const adjuntoExistente = await Adjunto.findByPk(archivoId);
-    if (!adjuntoExistente) return res.status(404).json({ error: 'Archivo no encontrado' });
-
-    // Eliminar archivo anterior del sistema
-    if (fs.existsSync(adjuntoExistente.ruta_archivo)) {
-      fs.unlinkSync(adjuntoExistente.ruta_archivo);
+    if (!tarea) {
+      return res.status(404).json({ error: 'Tarea no encontrada' });
     }
 
-    await adjuntoExistente.update({
-      nombre_archivo: archivoNuevo.filename,
-      ruta_archivo: archivoNuevo.path,
-      fecha_subida: new Date()
+    const adjuntos = await Adjunto.findAll({
+      where: { tarea_id: id }
     });
 
-    res.status(200).json({
-      mensaje: 'Archivo actualizado correctamente',
-      adjunto: adjuntoExistente
-    });
+    res.json(adjuntos);
   } catch (error) {
-    console.error('Error al editar el archivo:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: 'Error al obtener los adjuntos', detalle: error.message });
   }
 };
 
-// Eliminar archivo
-exports.eliminarArchivo = async (req, res) => {
-  const { tareaId, archivoId } = req.params;
-
+// Subir adjuntos a una tarea (varios archivos)
+exports.subirAdjunto = async (req, res) => {
   try {
+    const { id } = req.params;
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'No se subió ningún archivo' });
+    }
+
+    const tarea = await Tarea.findByPk(id);
+    if (!tarea) {
+      return res.status(404).json({ error: 'Tarea no encontrada' });
+    }
+
+    const archivosSubidos = [];
+
+    for (let file of req.files) {
+      const adjunto = await Adjunto.create({
+        tarea_id: id,
+        nombre_archivo: file.originalname,
+        ruta_archivo: file.path,
+        fecha_subida: new Date()
+      });
+      archivosSubidos.push(adjunto);
+    }
+
+    res.status(201).json({ mensaje: 'Archivos subidos correctamente', adjuntos: archivosSubidos });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al subir los archivos', detalle: error.message });
+  }
+};
+
+// Editar un adjunto
+exports.editarAdjunto = async (req, res) => {
+  try {
+    const { tareaId, archivoId } = req.params;
+
     const tarea = await Tarea.findByPk(tareaId);
-    if (!tarea) return res.status(404).json({ error: 'Tarea no encontrada' });
+    if (!tarea) {
+      return res.status(404).json({ error: 'Tarea no encontrada' });
+    }
 
     const adjunto = await Adjunto.findByPk(archivoId);
-    if (!adjunto) return res.status(404).json({ error: 'Archivo no encontrado' });
+    if (!adjunto) {
+      return res.status(404).json({ error: 'Adjunto no encontrado' });
+    }
 
-    // Eliminar archivo del sistema
-    if (fs.existsSync(adjunto.ruta_archivo)) {
-      fs.unlinkSync(adjunto.ruta_archivo);
+    if (req.file) {
+      adjunto.nombre_archivo = req.file.originalname;
+      adjunto.ruta_archivo = req.file.path;
+      adjunto.fecha_subida = new Date();
+      await adjunto.save();
+    }
+
+    res.json({ mensaje: 'Adjunto actualizado correctamente', adjunto });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al editar el adjunto', detalle: error.message });
+  }
+};
+
+// Eliminar un adjunto
+exports.eliminarAdjunto = async (req, res) => {
+  try {
+    const { tareaId, archivoId } = req.params;
+
+    const tarea = await Tarea.findByPk(tareaId);
+    if (!tarea) {
+      return res.status(404).json({ error: 'Tarea no encontrada' });
+    }
+
+    const adjunto = await Adjunto.findByPk(archivoId);
+    if (!adjunto) {
+      return res.status(404).json({ error: 'Adjunto no encontrado' });
     }
 
     await adjunto.destroy();
 
-    res.status(200).json({ mensaje: 'Archivo eliminado correctamente' });
+    res.json({ mensaje: 'Adjunto eliminado correctamente' });
   } catch (error) {
-    console.error('Error al eliminar el archivo:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    res.status(500).json({ error: 'Error al eliminar el adjunto', detalle: error.message });
   }
 };

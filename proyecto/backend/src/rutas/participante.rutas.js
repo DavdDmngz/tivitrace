@@ -18,7 +18,6 @@ const validarCampos = (req, res, next) => {
 router.get(
     '/',
     validarAutenticacion,
-    validarRol(['administrador', 'gestor']),
     [
         query('proyecto_id')
             .optional()
@@ -34,7 +33,6 @@ router.get(
 router.get(
     '/usuarios',
     validarAutenticacion,
-    validarRol(['administrador', 'gestor']),
     [
         query('proyecto_id')
             .exists().withMessage('El ID del proyecto es obligatorio')

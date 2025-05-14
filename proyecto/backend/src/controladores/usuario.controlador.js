@@ -51,24 +51,69 @@ const usuarioController = {
 
     async obtenerUsuarios(req, res) {
         try {
-            const usuarios = await Usuarios.findAll();
-            res.json(usuarios);
+            // Obtener los usuarios con el nombre del rol asociado a cada usuario
+            const usuarios = await Usuarios.findAll({
+                include: [
+                    {
+                        model: Roles,  // Modelo de rol
+                        as: 'roles',  // Alias usado en la relación
+                        attributes: ['nombre'],  // Traemos solo el campo 'nombre' del rol
+                        through: { attributes: [] }  // Ignoramos los atributos de la tabla intermedia
+                    }
+                ]
+            });
+    
+            // Mapear los usuarios para incluir el nombre del rol
+            const usuariosConRol = usuarios.map(usuario => {
+                // Verificamos si el usuario tiene roles asignados
+                const rol = usuario.roles.length > 0 ? usuario.roles[0].nombre : null;  // Solo tomamos el primer rol
+                return {
+                    ...usuario.toJSON(),  // Convertimos el usuario a un objeto plano
+                    rol: rol  // Agregamos el rol al objeto
+                };
+            });
+    
+            // Devolvemos los usuarios con el rol
+            res.json(usuariosConRol);
         } catch (error) {
+            // En caso de error, respondemos con un mensaje de error
             res.status(500).json({ msg: 'Error al obtener usuarios', error });
         }
-    },
+    },    
 
     async obtenerUsuarioPorId(req, res) {
         try {
-            const usuario = await Usuarios.findByPk(req.params.id);
+            // Buscar el usuario por ID incluyendo el nombre del rol
+            const usuario = await Usuarios.findByPk(req.params.id, {
+                include: [
+                    {
+                        model: Roles,
+                        as: 'roles',
+                        attributes: ['nombre'],
+                        through: { attributes: [] }
+                    }
+                ]
+            });
+    
+            // Si no se encuentra, retornar 404
             if (!usuario) {
                 return res.status(404).json({ msg: 'Usuario no encontrado' });
             }
-            res.json(usuario);
+    
+            // Convertir a objeto plano y agregar el campo 'rol'
+            const usuarioJSON = usuario.toJSON();
+            const rol = usuarioJSON.roles?.[0]?.nombre || null;
+    
+            const usuarioConRol = {
+                ...usuarioJSON,
+                rol: rol
+            };
+    
+            res.json(usuarioConRol);
         } catch (error) {
             res.status(500).json({ msg: 'Error al obtener usuario', error });
         }
-    },
+    },    
 
     async actualizarUsuario(req, res) {
         try {

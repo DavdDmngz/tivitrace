@@ -11300,6 +11300,22 @@
     box-shadow: 0 0.75rem 1.25rem rgba(46, 89, 217, 0.4);
   }
 
+  .expanded-card {
+    height: auto;
+  }
   
+  .adjunto-card {
+    position: relative;
+  }
   
+  .adjunto-card .acciones-adjunto {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
   
+  .adjunto-card:hover .acciones-adjunto {
+    opacity: 1;
+    visibility: visible;
+  }
+    

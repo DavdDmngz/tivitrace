@@ -6,10 +6,8 @@ const Participante = require('../modelos/participante.modelo');
 exports.obtenerProyectos = async (req, res) => {
     try {
         const usuario = req.user;
-        console.log('Usuario:', usuario);
 
         let proyectos;
-
         const roles = usuario.roles || [];
         const esAdmin = roles.some(r => r.nombre === 'administrador');
 
@@ -59,19 +57,20 @@ exports.obtenerProyectoPorId = async (req, res) => {
 // Crear un nuevo proyecto
 exports.crearProyecto = async (req, res) => {
     try {
-        const { nombre, descripcion } = req.body;
+        const { nombre, descripcion, fecha_fin } = req.body;
 
         const nuevoProyecto = await Proyecto.create({
             nombre,
             descripcion,
-            estado: 'en_progreso',
+            estado: 'en_proceso',
             progreso: 0,
             fecha_creacion: new Date(),
-            fecha_fin: null
+            fecha_fin: fecha_fin ? new Date(fecha_fin) : null
         });
 
         res.status(201).json(nuevoProyecto);
     } catch (error) {
+        console.error('Error al crear el proyecto:', error);
         res.status(500).json({ error: 'Error al crear el proyecto', detalle: error.message });
     }
 };
@@ -119,6 +118,7 @@ exports.finalizarProyecto = async (req, res) => {
 
         res.json({ mensaje: 'Proyecto finalizado correctamente', proyecto });
     } catch (error) {
+        console.error('Error al finalizar el proyecto:', error);
         res.status(500).json({ error: 'Error al finalizar el proyecto', detalle: error.message });
     }
 };
@@ -136,6 +136,7 @@ exports.eliminarProyecto = async (req, res) => {
         await proyecto.destroy();
         res.json({ mensaje: 'Proyecto eliminado correctamente' });
     } catch (error) {
+        console.error('Error al eliminar el proyecto:', error);
         res.status(500).json({ error: 'Error al eliminar el proyecto', detalle: error.message });
     }
 };
