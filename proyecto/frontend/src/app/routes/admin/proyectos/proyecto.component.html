@@ -50,7 +50,7 @@
 
     <div *ngFor="let proyecto of proyectosFinalizados" 
         class="card mb-3 border-success cursor-pointer"
-        [routerLink]="['/admin/proyectos', proyecto.id]" 
+        [routerLink]="['/proyectos', proyecto.id]" 
         style="text-decoration: none; color: inherit;">
       <div class="card-body">
         <h5 class="card-title">Proyecto: {{ proyecto.nombre }}</h5>

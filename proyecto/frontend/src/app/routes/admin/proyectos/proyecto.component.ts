@@ -41,8 +41,8 @@ export class ProyectoComponent implements OnInit {
     this.cargando = true;
     this.proyectoService.obtenerProyectos().subscribe({
       next: (proyectos) => {
-        this.proyectos = proyectos.filter(p => (p.progreso ?? 0) < 100);
-        this.proyectosFinalizados = proyectos.filter(p => p.progreso === 100);
+        this.proyectos = proyectos.filter(p => p.estado !== 'finalizado');
+        this.proyectosFinalizados = proyectos.filter(p => p.estado === 'finalizado');
         this.cargando = false;
       },
       error: (err) => {

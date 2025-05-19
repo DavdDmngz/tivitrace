@@ -136,22 +136,49 @@ exports.tareasPorProyecto = async (req, res) => {
 // GET /api/reportes/usuarios-con-mas-tareas
 exports.usuariosConMasTareas = async (req, res) => {
   try {
+    // Obtenemos los participantes con más tareas finalizadas
     const usuariosConMasTareas = await Participante.findAll({
+      include: [
+        {
+          model: Tarea,
+          as: 'tarea',
+          where: { estado: 'finalizado' },
+          attributes: []
+        }
+      ],
       attributes: [
-        'usuario_id', 
+        'usuario_id',
         [Sequelize.fn('COUNT', Sequelize.col('tarea_id')), 'cantidad']
       ],
       group: ['usuario_id'],
       order: [[Sequelize.literal('cantidad'), 'DESC']],
-      limit: 10
+      limit: 10,
+      raw: true
     });
 
-    res.json(usuariosConMasTareas);
+    // Para cada uno, buscamos el nombre completo del usuario
+    const resultados = await Promise.all(
+      usuariosConMasTareas.map(async (item) => {
+        const usuario = await Usuarios.findByPk(item.usuario_id, {
+          attributes: ['nombre', 'apellido'],
+          raw: true
+        });
+
+        return {
+          usuario_id: item.usuario_id,
+          nombre_completo: `${usuario.nombre} ${usuario.apellido}`,
+          cantidad_tareas: parseInt(item.cantidad, 10)
+        };
+      })
+    );
+
+    res.json(resultados);
   } catch (error) {
-    console.error('Error en usuarios con más tareas:', error);
-    res.status(500).json({ error: 'Error al generar reporte de usuarios con más tareas.' });
+    console.error('Error en usuarios con más tareas finalizadas:', error);
+    res.status(500).json({ error: 'Error al generar reporte de usuarios con más tareas finalizadas.' });
   }
 };
+
 
 // GET /api/reportes/proyectos-cerca-fecha-fin
 exports.proyectosCercaFechaFin = async (req, res) => {
@@ -197,3 +224,61 @@ exports.promedioTiempoEjecucion = async (req, res) => {
     res.status(500).json({ error: 'Error al generar reporte de promedio tiempo de ejecución.' });
   }
 };
+
+// GET /api/reportes/estadisticas-proyecto
+exports.estadisticasProyecto = async (req, res) => {
+  const { proyecto_id } = req.query;
+
+  try {
+    const totalParticipantes = await Participante.count({
+      distinct: true,
+      col: 'usuario_id',
+      where: { proyecto_id }
+    });
+
+    const topParticipante = await Participante.findAll({
+      where: { proyecto_id },
+      include: [{
+        model: Tarea,
+        as: 'tarea',
+        where: { estado: 'finalizado' },
+        attributes: []
+      }],
+      attributes: [
+        'usuario_id',
+        [Sequelize.fn('COUNT', Sequelize.col('tarea_id')), 'tareas_finalizadas']
+      ],
+      group: ['usuario_id'],
+      order: [[Sequelize.literal('tareas_finalizadas'), 'DESC']],
+      limit: 1
+    });
+
+    const participanteConMasTareasFinalizadas = topParticipante[0] || null;
+
+    if (participanteConMasTareasFinalizadas) {
+      const participantePlain = participanteConMasTareasFinalizadas.get({ plain: true });
+
+      const usuario = await Usuarios.findByPk(participantePlain.usuario_id, {
+        attributes: ['nombre', 'apellido']
+      });
+
+      participantePlain.usuario_nombre_completo = `${usuario.nombre} ${usuario.apellido}`;
+
+      res.json({
+        totalParticipantes,
+        participanteConMasTareasFinalizadas: participantePlain
+      });
+    } else {
+      res.json({
+        totalParticipantes,
+        participanteConMasTareasFinalizadas: null
+      });
+    }
+
+  } catch (error) {
+    console.error('Error en estadísticas del proyecto:', error);
+    res.status(500).json({ error: 'Error al generar estadísticas del proyecto.' });
+  }
+};
+
+

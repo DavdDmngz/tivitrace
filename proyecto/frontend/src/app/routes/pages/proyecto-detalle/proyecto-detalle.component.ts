@@ -29,6 +29,10 @@ export class DetalleProyectoComponent implements OnInit {
   tareas: Tarea[] = [];
   noTareas: boolean = false;
 
+  totalTareas: number = 0;
+  totalParticipantes: number = 0;
+  participanteConMasTareasFinalizadas: { nombre: string, cantidad: number } | null = null;
+
   estadosTarea: EstadoTarea[] = ['sin_comenzar', 'en_proceso', 'pendiente', 'finalizado'];
 
   tareaEnEdicion: Tarea | null = null;
@@ -81,15 +85,42 @@ export class DetalleProyectoComponent implements OnInit {
     }).subscribe({
       next: (data) => {
         this.tareas = data;
-        this.noTareas = this.tareas.length === 0;
+        this.totalTareas = this.tareas.length;
+        this.noTareas = this.totalTareas === 0;
+
+        this.cargarEstadisticasAdicionales();
       },
       error: (err) => {
         console.error('Error al cargar tareas:', err);
         this.tareas = [];
+        this.totalTareas = 0;
         this.noTareas = true;
       },
     });
   }
+
+  cargarEstadisticasAdicionales(): void {
+    this.http.get<any>('http://localhost:3003/api/reportes/estadisticas-proyecto', {
+      params: { proyecto_id: this.proyectoId.toString() }
+    }).subscribe({
+      next: (data) => {
+        this.totalParticipantes = data.totalParticipantes ?? 0;
+        if(data.participanteConMasTareasFinalizadas) {
+          this.participanteConMasTareasFinalizadas = {
+            nombre: data.participanteConMasTareasFinalizadas.usuario_nombre_completo,
+            cantidad: data.participanteConMasTareasFinalizadas.tareas_finalizadas
+          };
+        } else {
+          this.participanteConMasTareasFinalizadas = null;
+        }
+      },
+      error: (err) => {
+        console.error('Error al cargar estadísticas adicionales:', err);
+        this.totalParticipantes = 0;
+        this.participanteConMasTareasFinalizadas = null;
+      }
+    });    
+  }  
 
   tareasPorEstado(estado: EstadoTarea): Tarea[] {
     return this.tareas.filter(t => t.estado === estado);

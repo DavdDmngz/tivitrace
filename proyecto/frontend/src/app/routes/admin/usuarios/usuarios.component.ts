@@ -156,4 +156,18 @@ export class UsuarioComponent {
       }
     });
   }
+  desactivarUsuario(usuario: any) {
+    if (confirm(`¿Estás seguro de desactivar a ${usuario.nombre} ${usuario.apellido}?`)) {
+      this.http.put(`${this.apiUrl}/${usuario.id}`, { activo: false }).subscribe({
+        next: () => {
+          this.usuarios = this.usuarios.filter(u => u.id !== usuario.id);
+          alert('Usuario desactivado correctamente');
+        },
+        error: err => {
+          console.error(err);
+          alert('Error al desactivar el usuario');
+        }
+      });
+    }
+  }
 }

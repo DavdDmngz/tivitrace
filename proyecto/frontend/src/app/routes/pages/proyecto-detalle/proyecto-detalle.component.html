@@ -1,10 +1,38 @@
 <div class="container py-4" *ngIf="proyecto">
+  <!-- Notificación si el proyecto está completo -->
+  <div *ngIf="proyecto.progreso?.toString() === '100.00'" class="alert alert-success text-center" role="alert">
+    Ahora puedes finalizar este proyecto
+  </div>
+
+  <!-- Resumen del proyecto cuando está completo -->
+  <div *ngIf="proyecto.progreso?.toString() === '100.00'" class="card mb-4 border-success">
+    <div class="card-header bg-success text-white">
+      <strong>Resumen del proyecto</strong>
+    </div>
+    <div class="card-body">
+      <p><strong>Nombre:</strong> {{ proyecto.nombre }}</p>
+      <p><strong>Progreso:</strong> {{ proyecto.progreso }}%</p>
+      <p><strong>Descripción:</strong> {{ proyecto.descripcion || 'Sin descripción' }}</p>
+      <p><strong>Fecha de inicio:</strong> {{ proyecto.fecha_creacion | date:'dd/MM/yy' }}</p>
+      <p><strong>Fecha estimada de finalización:</strong> {{ proyecto.fecha_fin | date:'dd/MM/yy' }}</p>
+      <p><strong>Total de tareas:</strong> {{ totalTareas }}</p>
+      <p><strong>Total de participantes:</strong> {{ totalParticipantes }}</p>
+      <p><strong>Participantes con más tareas finalizadas:</strong></p>
+      <ul>
+        <li *ngIf="participanteConMasTareasFinalizadas">
+          {{ participanteConMasTareasFinalizadas.nombre }} - 
+          {{ participanteConMasTareasFinalizadas.cantidad }} tarea(s)
+        </li>
+               
+      </ul>
+    </div>
+  </div>
+
   <!-- Título y acciones -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div class="d-flex align-items-center">
       <!-- Nombre del proyecto -->
       <h2 *ngIf="editingField !== 'nombre'" class="me-2">{{ proyecto.nombre }}</h2>
-
       <!-- Edición del nombre -->
       <div *ngIf="editingField === 'nombre'" class="input-group me-2">
         <input [(ngModel)]="nuevoValor" class="form-control" />
@@ -20,18 +48,13 @@
       </button>
       <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
         <li>
-          <a class="dropdown-item" *ngIf="editingField !== 'nombre'" (click)="editarCampo('nombre')">
-            <i class="fas fa-pencil-alt"></i> Editar nombre
-          </a>
-        </li>
-        <li>
-          <a class="dropdown-item" *ngIf="editingField !== 'descripcion'" (click)="editarCampo('descripcion')">
-            <i class="fas fa-pencil-alt"></i> Editar descripción
+          <a class="dropdown-item" (click)="finalizarProyecto()">
+            <i class="fas fa-check"></i> Finalizar
           </a>
         </li>
         <li>
           <a class="dropdown-item" (click)="eliminarProyecto()">
-            <i class="fas fa-trash-alt"></i> Eliminar proyecto
+            <i class="fas fa-trash-alt"></i> Eliminar
           </a>
         </li>
       </ul>
@@ -133,8 +156,6 @@
                     <div *ngIf="tareaEnEdicion !== tarea" class="w-100">
                       {{ tarea.nombre }}
                     </div>
-
-                    <!-- Icono de pendiente -->
                     <div *ngIf="tarea.estado === 'pendiente'" class="ms-2 text-warning" placement="top">
                       <i 
                         class="fas fa-exclamation-triangle"

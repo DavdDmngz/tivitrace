@@ -79,4 +79,15 @@ router.get(
     reportesControlador.promedioTiempoEjecucion
 );
 
+// 📌 Obtener estadísticas adicionales por proyecto (total participantes y top finalizador)
+router.get(
+    '/estadisticas-proyecto',
+    validarAutenticacion,
+    validarRol(['administrador', 'supervisor']),
+    query('proyecto_id').notEmpty().withMessage('El ID del proyecto es obligatorio'),
+    validarCampos,
+    reportesControlador.estadisticasProyecto
+  );
+  
+
 module.exports = router;

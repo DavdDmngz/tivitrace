@@ -10,6 +10,7 @@ export interface Proyecto {
   progreso?: number;
   fecha_creacion?: string;
   fecha_fin?: string | null;
+  estado?: string;
 }
 
 @Injectable({ providedIn: 'root' })

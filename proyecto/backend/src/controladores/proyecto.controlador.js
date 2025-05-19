@@ -57,14 +57,14 @@ exports.obtenerProyectoPorId = async (req, res) => {
 // Crear un nuevo proyecto
 exports.crearProyecto = async (req, res) => {
     try {
-        const { nombre, descripcion, fecha_fin } = req.body;
+        const { nombre, descripcion, fecha_creacion, fecha_fin } = req.body;
 
         const nuevoProyecto = await Proyecto.create({
             nombre,
             descripcion,
             estado: 'en_proceso',
             progreso: 0,
-            fecha_creacion: new Date(),
+            fecha_creacion: fecha_creacion ? new Date(fecha_creacion) : new Date(),
             fecha_fin: fecha_fin ? new Date(fecha_fin) : null
         });
 
@@ -79,7 +79,7 @@ exports.crearProyecto = async (req, res) => {
 exports.actualizarProyecto = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre, descripcion, fecha_fin, estado } = req.body;
+        const { nombre, descripcion, fecha_creacion, fecha_fin, estado } = req.body;
 
         const proyecto = await Proyecto.findByPk(id);
         if (!proyecto) {
@@ -89,7 +89,8 @@ exports.actualizarProyecto = async (req, res) => {
         await proyecto.update({
             nombre,
             descripcion,
-            fecha_fin: fecha_fin === undefined ? null : fecha_fin,
+            fecha_creacion: fecha_creacion ? new Date(fecha_creacion) : proyecto.fecha_creacion,
+            fecha_fin: fecha_fin === undefined ? null : new Date(fecha_fin),
             estado
         });
 

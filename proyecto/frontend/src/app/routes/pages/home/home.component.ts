@@ -265,19 +265,16 @@ export class HomeComponent implements OnInit {
 
   inicializarGraficoTareasPorProyecto() {
     setTimeout(() => {
-      // Verificar que this.tareasPorProyecto tenga datos
       if (this.tareasPorProyecto && this.tareasPorProyecto.length > 0) {
-        // Generar las etiquetas (nombres de los proyectos) y los datos (cantidad de tareas)
         const data = {
-          labels: (this.tareasPorProyecto || []).map(t => `Proyecto ${t.proyecto_id}`), // Cambiar 'proyecto' por 'proyecto_id' o un nombre real
+          labels: this.tareasPorProyecto.map(t => `Proyecto ${t.proyecto_id}`),
           datasets: [{
             label: 'Tareas por Proyecto',
-            data: (this.tareasPorProyecto || []).map(t => t.cantidad),
+            data: this.tareasPorProyecto.map(t => t.cantidad),
             backgroundColor: '#36a2eb'
           }]
         };
-  
-        // Crear el gráfico
+
         new Chart('tareasPorProyectoChart', {
           type: 'bar',
           data: data,
@@ -294,21 +291,23 @@ export class HomeComponent implements OnInit {
         console.error("No se han recibido datos válidos para el gráfico de tareas.");
       }
     }, 200);
-  }  
+  }
 
   inicializarGraficoPromedioTiempoEjecucion() {
     setTimeout(() => {
+      const promedio = parseFloat(this.promedioTiempoEjecucion?.promedio || 0);
+  
       const data = {
         labels: ['Promedio Tiempo de Ejecución'],
         datasets: [{
           label: 'Tiempo (horas)',
-          data: [this.promedioTiempoEjecucion || 0],
+          data: [promedio],
           backgroundColor: '#ff6384'
         }]
       };
-
+  
       new Chart('promedioTiempoEjecucionChart', {
-        type: 'bar',
+        type: 'doughnut',
         data: data,
         options: {
           responsive: true,
@@ -322,25 +321,36 @@ export class HomeComponent implements OnInit {
       });
     }, 200);
   }
+  
 
   inicializarGraficoUsuariosConMasTareas() {
     setTimeout(() => {
-     
-      const data = {
-        labels: (this.usuariosConMasTareas || []).map(u => u.usuario),
-        datasets: [{
-          label: 'Usuarios con Más Tareas',
-          data: (this.usuariosConMasTareas || []).map(u => u.cantidad),
-          backgroundColor: '#4bc0c0'
-        }]
-      };
-
-      new Chart('usuariosConMasTareasChart', {
-        type: 'bar',
-        data: data,
-        options: { responsive: true }
-      });
-    }
-    , 200);
-  }
+      if (this.usuariosConMasTareas && this.usuariosConMasTareas.length > 0) {
+        const data = {
+          labels: this.usuariosConMasTareas.map(u => u.nombre_completo),
+          datasets: [{
+            label: 'Tareas Asignadas',
+            data: this.usuariosConMasTareas.map(u => u.cantidad_tareas),
+            backgroundColor: '#9966ff'
+          }]
+        };
+  
+        new Chart('usuariosConMasTareasChart', {
+          type: 'bar',
+          data: data,
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: 'Cantidad de Tareas' }
+              }
+            }
+          }
+        });
+      } else {
+        console.warn("No se encontraron usuarios con tareas para graficar.");
+      }
+    }, 200);
+  }  
 }

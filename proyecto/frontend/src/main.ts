@@ -8,7 +8,6 @@ import { ToastrModule } from 'ngx-toastr';
 import { environment } from './app/environments/environment.component';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
-
 // Formato de fecha y hora - i18n
 // Importa el locale de Angular para español (es)
 import { registerLocaleData } from '@angular/common';
